@@ -5,9 +5,12 @@ SRC = src/
 
 TARGET = wireless-defender
 
-.PHONY: debug clean
+.PHONY: debug all clean
 
-debug: wireless-defender.o config.o utils.o
+debug: CFLAGS += $(DEBUG_FLAGS)
+debug: all
+
+all: wireless-defender.o config.o utils.o
 	$(CC) -o $(TARGET) *.o -lconfuse
 wireless-defender.o: $(SRC)wireless-defender.c $(SRC)wireless-defender.h
 	$(CC) $(CFLAGS) $(SRC)wireless-defender.c
