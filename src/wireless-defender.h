@@ -3,5 +3,6 @@
 
 #include "config.h"
 #include "utils.h"
+#include "capture.h"
 
 #endif
