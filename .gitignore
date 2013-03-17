@@ -1,2 +1,4 @@
 # ignore .o object file
 *.o
+# ignore target binary file
+wireless-defender
