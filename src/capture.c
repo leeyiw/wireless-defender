@@ -7,7 +7,7 @@ static int capture_cnt;
 static u_char *capture_callback_arg;
 
 void
-WD_capture_init(pcap_handler callback, int cnt, u_char *callback_arg);
+WD_capture_init(pcap_handler callback, int cnt, u_char *callback_arg)
 {
 	device = pcap_open_live(g_interface, 65535, 0, 0, errbuf);
 	if(device == NULL) {
