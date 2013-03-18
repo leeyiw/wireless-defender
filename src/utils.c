@@ -7,6 +7,18 @@ user_info(const char *str)
 }
 
 void
+user_info1(const char *format, ...)
+{
+	va_list ap;
+	char buf[1024];
+
+	va_start(ap, format);
+	vsprintf(buf, format, ap);
+	fprintf(stdout, "%s\n", buf);
+	va_end(ap);
+}
+
+void
 user_exit(const char *str)
 {
 	fprintf(stderr, "%s\n", str);
