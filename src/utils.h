@@ -17,6 +17,7 @@
 #define DEBUG_INFO(s)
 #endif
 
+extern void user_info(const char *str);
 extern void user_exit(const char *str);
 extern void user_exit1(const char *format, ...);
 extern void err_exit(const char *str);

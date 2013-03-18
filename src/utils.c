@@ -1,6 +1,12 @@
 #include "utils.h"
 
 void
+user_info(const char *str)
+{
+	fprintf(stdout, "%s\n", str);
+}
+
+void
 user_exit(const char *str)
 {
 	fprintf(stderr, "%s\n", str);
