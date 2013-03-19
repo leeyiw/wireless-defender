@@ -8,6 +8,10 @@ static cfg_opt_t cfg_opts[] = {
 	CFG_END()
 };
 
+/** \brief 初始化config模块，
+ *
+ * 加载配置文件中的配置项至全局变量中
+ */
 void
 WD_config_init()
 {
