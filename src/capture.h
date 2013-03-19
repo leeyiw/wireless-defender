@@ -2,6 +2,9 @@
 #define _CAPTURE_H
 
 #include <pcap/pcap.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <net/if.h>
 
 #include "config.h"
 

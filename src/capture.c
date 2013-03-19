@@ -6,12 +6,30 @@ static pcap_handler capture_callback;
 static int capture_cnt;
 static u_char *capture_callback_arg;
 
+/** \brief 初始化capture模块
+ *
+ */
 void
 WD_capture_init(pcap_handler callback, int cnt, u_char *callback_arg)
 {
+	int sockfd;
+	struct ifreq ifr;
+
+	// 创建套接字描述符，为调用ioctl做准备
+	sockfd = socket(AF_INET, SOCK_STREAM, 0);
+	if(-1 == sockfd) {
+		err_exit("open socket error");
+	}
+
+	// 使用ioctl将网卡改为monitor模式
+	if(-1 == ioctl(sockfd, SIOCGIFFLAGS, &ifr)) {
+		err_exit1("get interface '%s' flags error", g_interface);
+	}
+
+	// 初始化libpcap抓包设备
 	device = pcap_open_live(g_interface, 65535, 0, 0, errbuf);
 	if(device == NULL) {
-		user_exit1("open device '%s' for capturing error: %s",
+		user_exit1("open interface '%s' for capturing error: %s",
 			g_interface, errbuf);
 	}
 	capture_callback = callback;
