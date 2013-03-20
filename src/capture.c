@@ -15,18 +15,39 @@ WD_capture_init(pcap_handler callback, int cnt, u_char *callback_arg)
 	int sockfd;
 	struct ifreq ifr;
 
-	// 创建套接字描述符，为调用ioctl做准备
+	/*
+	 * 创建套接字描述符，为调用ioctl做准备
+	 */
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	if(-1 == sockfd) {
 		err_exit("open socket error");
 	}
 
-	// 使用ioctl将网卡改为monitor模式
+	/*
+	 * 使用ioctl将网卡改为monitor模式
+	 */
+	// 先将网卡关闭
+	strncpy(ifr.ifr_name, g_interface, IF_NAMESIZE);
 	if(-1 == ioctl(sockfd, SIOCGIFFLAGS, &ifr)) {
 		err_exit1("get interface '%s' flags error", g_interface);
 	}
+	ifr.ifr_flags &= ~IFF_UP;
+	if(-1 == ioctl(sockfd, SIOCSIFFLAGS, &ifr)) {
+		err_exit1("set interface '%s' flags error", g_interface);
+	}
+	// 再将网卡模式设置为Monitor模式
+	ifr.ifr_data = 6;
+	if(-1 == ioctl(sockfd, SIOCSIWMODE, &ifr)) {
+		err_exit1("set interface '%s' mode error", g_interface);
+	}
+	// 最后将网卡启用
+	if(-1 == ioctl(sockfd, SIOCSIFFLAGS, &ifr)) {
+		err_exit1("set interface '%s' flags error", g_interface);
+	}
 
-	// 初始化libpcap抓包设备
+	/*
+	 * 初始化libpcap抓包设备
+	 */
 	device = pcap_open_live(g_interface, 65535, 0, 0, errbuf);
 	if(device == NULL) {
 		user_exit1("open interface '%s' for capturing error: %s",
