@@ -13,7 +13,7 @@ void
 WD_capture_init(pcap_handler callback, int cnt, u_char *callback_arg)
 {
 	int sockfd;
-	struct ifreq ifr;
+	struct ifreq ifr, ifr_mode;
 
 	/*
 	 * 创建套接字描述符，为调用ioctl做准备
@@ -36,11 +36,12 @@ WD_capture_init(pcap_handler callback, int cnt, u_char *callback_arg)
 		err_exit1("set interface '%s' flags error", g_interface);
 	}
 	// 再将网卡模式设置为Monitor模式
-	ifr.ifr_data = 6;
-	if(-1 == ioctl(sockfd, SIOCSIWMODE, &ifr)) {
+	ifr_mode.ifr_data = (void *)6;
+	if(-1 == ioctl(sockfd, SIOCSIWMODE, &ifr_mode)) {
 		err_exit1("set interface '%s' mode error", g_interface);
 	}
 	// 最后将网卡启用
+	ifr.ifr_flags |= IFF_UP;
 	if(-1 == ioctl(sockfd, SIOCSIFFLAGS, &ifr)) {
 		err_exit1("set interface '%s' flags error", g_interface);
 	}
