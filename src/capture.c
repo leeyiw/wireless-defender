@@ -77,6 +77,7 @@ WD_capture_set_callback(pcap_handler callback)
 /**
  * 设置捕获数据包的个数
  * @param cnt 捕获数据包的个数，抓到cnt个数据包后抓包停止
+ * cnt为-1或0时代表不设置个数限制
  */
 void
 WD_capture_set_cnt(int cnt)

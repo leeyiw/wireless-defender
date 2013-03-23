@@ -4,5 +4,6 @@
 #include "config.h"
 #include "utils.h"
 #include "capture.h"
+#include "analyse.h"
 
 #endif
