@@ -6,8 +6,11 @@ static pcap_handler capture_callback;
 static int capture_cnt;
 static u_char *capture_callback_arg;
 
-/** \brief 初始化capture模块
- *
+/** 
+ * 初始化capture模块
+ * @param callback 捕获数据包后的回调函数
+ * @param cnt 捕获数据包的个数，抓到cnt个数据包后抓包停止
+ * @param callback_arg 捕获数据包后回调函数的参数
  */
 void
 WD_capture_init(pcap_handler callback, int cnt, u_char *callback_arg)
@@ -58,24 +61,39 @@ WD_capture_init(pcap_handler callback, int cnt, u_char *callback_arg)
 	capture_callback_arg = callback_arg;
 }
 
+/**
+ * 设置捕获数据包后的回调函数
+ * @param callback 捕获数据包后的回调函数
+ */
 void
 WD_capture_set_callback(pcap_handler callback)
 {
 	capture_callback = callback;
 }
 
+/**
+ * 设置捕获数据包的个数
+ * @param cnt 捕获数据包的个数，抓到cnt个数据包后抓包停止
+ */
 void
 WD_capture_set_cnt(int cnt)
 {
 	capture_cnt = cnt;
 }
 
+/**
+ * 设置捕获数据包后回调函数的参数
+ * @param callback_arg 捕获数据包后回调函数的参数
+ */
 void
 WD_capture_set_callback_arg(u_char *callback_arg)
 {
 	capture_callback_arg = callback_arg;
 }
 
+/**
+ * 启动抓包
+ */
 void
 WD_capture_start()
 {
