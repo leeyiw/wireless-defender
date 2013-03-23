@@ -29,8 +29,10 @@ WD_capture_init(pcap_handler callback, int cnt, u_char *callback_arg)
 	/*
 	 * 使用ioctl将网卡改为monitor模式
 	 */
-	// 先将网卡关闭
+	// 设置两个ifreq结构体的网卡名字
 	strncpy(ifr.ifr_name, g_interface, IFNAMSIZ);
+	strncpy(ifr_mode.ifr_name, g_interface, IFNAMSIZ);
+	// 先将网卡关闭
 	if(-1 == ioctl(sockfd, SIOCGIFFLAGS, &ifr)) {
 		err_exit1("get interface '%s' flags error", g_interface);
 	}
