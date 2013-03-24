@@ -10,5 +10,6 @@
 extern void WD_config_init();
 
 extern const char *g_capture_interface;
+extern const char *g_server_interface;
 
 #endif

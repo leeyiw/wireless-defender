@@ -1,4 +1,12 @@
-#include "capture.h"
+#include <pcap/pcap.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <linux/wireless.h>
+#include <string.h>
+#include <inttypes.h>
+#include <unistd.h>
+
+#include "config.h"
 
 static pcap_t *device;
 static char errbuf[PCAP_ERRBUF_SIZE];
