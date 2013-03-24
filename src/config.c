@@ -1,10 +1,10 @@
 #include "config.h"
 
-const char *g_interface;
+const char *g_capture_interface;
 
 static cfg_t *cfg;
 static cfg_opt_t cfg_opts[] = {
-	CFG_STR("interface", "", CFGF_NONE),
+	CFG_STR("capture_interface", "", CFGF_NONE),
 	CFG_END()
 };
 
@@ -19,5 +19,5 @@ WD_config_init()
 	if(cfg_parse(cfg, WD_CONF_PATH) == CFG_PARSE_ERROR) {
 		user_exit1("config file %s parse error", WD_CONF_PATH);
 	}
-	g_interface = cfg_getstr(cfg, "interface");
+	g_capture_interface = cfg_getstr(cfg, "capture_interface");
 }

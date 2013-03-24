@@ -9,6 +9,6 @@
 
 extern void WD_config_init();
 
-extern const char *g_interface;
+extern const char *g_capture_interface;
 
 #endif
