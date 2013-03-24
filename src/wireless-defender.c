@@ -10,10 +10,21 @@ WD_init()
 	WD_capture_init(WD_analyse_test, 10, (u_char *)1);
 }
 
+void
+WD_destory()
+{
+	// 关闭抓包模块
+	WD_capture_destory();
+}
+
 int
 main(int argc, char *argv[])
 {
+	WD_init();
+
 	WD_capture_start();
+
+	WD_destory();
 
 	return 0;
 }

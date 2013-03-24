@@ -5,6 +5,7 @@ static char errbuf[PCAP_ERRBUF_SIZE];
 static pcap_handler capture_callback;
 static int capture_cnt;
 static u_char *capture_callback_arg;
+static int sockfd;
 
 /** 
  * 初始化capture模块
@@ -15,7 +16,6 @@ static u_char *capture_callback_arg;
 void
 WD_capture_init(pcap_handler callback, int cnt, u_char *callback_arg)
 {
-	int sockfd;
 	struct ifreq ifr, ifr_mode;
 
 	/*
@@ -112,4 +112,47 @@ WD_capture_start()
 	} else if(ret == -1) {
 		pcap_perror(device, "capture error");
 	}
+}
+
+/**
+ * 关闭抓包模块
+ */
+void
+WD_capture_destory()
+{
+	struct ifreq ifr, ifr_mode;
+
+
+	/*
+	 * 关闭libpcap抓包设备
+	 */
+	pcap_close(device);
+
+	/*
+	 * 使用ioctl将网卡改为monitor模式
+	 */
+	// 设置两个ifreq结构体的网卡名字
+	strncpy(ifr.ifr_name, g_interface, IFNAMSIZ);
+	strncpy(ifr_mode.ifr_name, g_interface, IFNAMSIZ);
+	// 先将网卡关闭
+	if(-1 == ioctl(sockfd, SIOCGIFFLAGS, &ifr)) {
+		err_exit1("get interface '%s' flags error", g_interface);
+	}
+	ifr.ifr_flags &= ~IFF_UP;
+	if(-1 == ioctl(sockfd, SIOCSIFFLAGS, &ifr)) {
+		err_exit1("set interface '%s' flags error", g_interface);
+	}
+	// 再将网卡模式设置为Managed模式
+	ifr_mode.ifr_data = (void *)2;
+	if(-1 == ioctl(sockfd, SIOCSIWMODE, &ifr_mode)) {
+		err_exit1("set interface '%s' mode error", g_interface);
+	}
+	// 最后将网卡启用
+	ifr.ifr_flags |= IFF_UP;
+	if(-1 == ioctl(sockfd, SIOCSIFFLAGS, &ifr)) {
+		err_exit1("set interface '%s' flags error", g_interface);
+	}
+
+	// 关闭套接字描述符
+	close(sockfd);
 }
