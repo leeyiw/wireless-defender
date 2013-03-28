@@ -17,8 +17,9 @@
 
 <a name="connection-sequence"></a>
 ### 1.2 连接建立过程
-client        ---->        server
+client        ---->        server  
 发送请求连接数据包，服务器进行验证
+
 client        <----        server
 发送连接响应数据包，拒绝连接或者完成连接建立
 
@@ -28,6 +29,20 @@ client        <----        server
 
 <a name="connection-request-packet"></a>
 ### 2.1 请求连接数据包
-字段名		值		长度/字节	中文解释	备注
-***
-magic		0x1DFBDF1E	4		魔数		
+<table>
+   <tr>
+      <td>&#23383;&#27573;&#21517;</td>
+      <td>&#20540;</td>
+      <td>&#38271;&#24230;/&#23383;&#33410;</td>
+      <td>&#22791;&#27880;</td>
+   </tr>
+   <tr>
+      <td>magic</td>
+      <td>0x1DFBDF1E</td>
+      <td>4</td>
+      <td>&#39764;&#25968;</td>
+   </tr>
+   <tr>
+      <td></td>
+   </tr>
+</table>
