@@ -12,18 +12,18 @@ debug: all
 
 all: wireless-defender.o server.o capture.o analyse.o config.o utils.o
 	$(CC) -o $(TARGET) *.o -lpcap -lconfuse
-wireless-defender.o: $(SRC)wireless-defender.c $(SRC)wireless-defender.h
-	$(CC) $(CFLAGS) $(SRC)wireless-defender.c
-server.o: $(SRC)server.c $(SRC)server.h
-	$(CC) $(CFLAGS) $(SRC)server.c
-capture.o: $(SRC)capture.c $(SRC)capture.h
-	$(CC) $(CFLAGS) $(SRC)capture.c
-analyse.o: $(SRC)analyse.c $(SRC)analyse.h
-	$(CC) $(CFLAGS) $(SRC)analyse.c
-config.o: $(SRC)config.c $(SRC)config.h
-	$(CC) $(CFLAGS) $(SRC)config.c
-utils.o: $(SRC)utils.c $(SRC)utils.h
-	$(CC) $(CFLAGS) $(SRC)utils.c
+wireless-defender.o: wireless-defender.c wireless-defender.h
+	$(CC) $(CFLAGS) wireless-defender.c
+server.o: server.c server.h
+	$(CC) $(CFLAGS) server.c
+capture.o: capture.c capture.h
+	$(CC) $(CFLAGS) capture.c
+analyse.o: analyse.c analyse.h
+	$(CC) $(CFLAGS) analyse.c
+config.o: config.c config.h
+	$(CC) $(CFLAGS) config.c
+utils.o: utils.c utils.h
+	$(CC) $(CFLAGS) utils.c
 
 clean:
 	-rm *.o $(TARGET)
