@@ -39,6 +39,12 @@ user_exit1(const char *format, ...)
 }
 
 void
+err_info(const char *str)
+{
+	fprintf(stderr, "%s\n", str);
+}
+
+void
 err_exit(const char *str)
 {
 	perror(str);
