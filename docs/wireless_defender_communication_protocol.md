@@ -18,7 +18,7 @@
 <a name="connection-sequence"></a>
 ### 1.2 连接建立过程
 client        ---->        server  
-发送请求连接数据包，服务器进行验证
+发送[请求连接数据包](#connection-request-packet)，服务器进行验证
 
 client        <----        server
 发送连接响应数据包，拒绝连接或者完成连接建立
@@ -45,7 +45,12 @@ security_type (4 bytes): 四字节无符号整形，标识了客户端支持的�
 	</tr>
 	<tr>
 		<td>SEC_TYPE_STANDARD</td>
+		<td>0x00000000</td>
+		<td>&#19981;&#21152;&#23494;</td>
+	</tr>
+	<tr>
+		<td>SEC_TYPE_SSL</td>
 		<td>0x00000001</td>
-		<td>&#19981;&#21152;&#23494;&#25968;&#25454;&#20256;&#36755;</td>
+		<td>&#20351;&#29992;SSL&#21152;&#23494;</td>
 	</tr>
 </table>
