@@ -7,6 +7,7 @@
 * [2 协议定义](#protocol-definition)
  - [2.1 请求连接数据包](#connection-request-packet)
  - [2.2 连接响应数据包](#connection-response-packet)
+ - [2.3 连接失败数据包](#connection-failure-packet)
 
 <a name="introduction"></a>
 ## 1 协议简介
