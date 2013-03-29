@@ -18,8 +18,6 @@ WD_server_init()
 {
 	struct ifreq ifr;
 	struct sockaddr_in *listen_addr;
-	struct sockaddr_in client_addr;
-	socklen_t client_addr_len;
 
 	// 创建监听描述符
 	listen_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -49,6 +47,8 @@ WD_server_init()
 void
 WD_server_main_loop()
 {
+	struct sockaddr_in client_addr;
+	socklen_t client_addr_len;
 	pid_t pid;
 
 	// 监听
