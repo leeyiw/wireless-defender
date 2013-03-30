@@ -7,4 +7,6 @@
 extern void WD_server_init();
 extern void WD_server_main_loop();
 
+extern int client_fd;
+
 #endif

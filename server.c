@@ -7,8 +7,11 @@
 #include "server.h"
 #include "config.h"
 
+int client_fd;
+
 static int listen_fd;
-static int client_fd;
+
+static void WD_server_handle_connection();
 
 /**
  * 初始化服务器模块
@@ -65,9 +68,19 @@ WD_server_main_loop()
 		pid = fork();
 		if(pid == 0) {
 			// 子进程
+			WD_server_handle_connection();
 		} else if(pid == -1) {
 			err_info("fork for client new connection error");
 		}
 		// 父进程继续接收连接
 	}
+}
+
+/**
+ * 处理客户端的请求
+ */
+void
+WD_server_handle_connection()
+{
+	
 }

@@ -10,12 +10,14 @@ TARGET = wireless-defender
 debug: CFLAGS += $(DEBUG_FLAGS)
 debug: all
 
-all: wireless-defender.o server.o capture.o analyse.o config.o utils.o
+all: wireless-defender.o server.o wdcp.o capture.o analyse.o config.o utils.o
 	$(CC) -o $(TARGET) *.o -lpcap -lconfuse
 wireless-defender.o: wireless-defender.c wireless-defender.h
 	$(CC) $(CFLAGS) wireless-defender.c
 server.o: server.c server.h
 	$(CC) $(CFLAGS) server.c
+wdcp.o: wdcp.c wdcp.h
+	$(CC) $(CFLAGS) wdcp.c
 capture.o: capture.c capture.h
 	$(CC) $(CFLAGS) capture.c
 analyse.o: analyse.c analyse.h
