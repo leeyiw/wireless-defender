@@ -4,6 +4,9 @@
 #define WDCP_CONNECTION_SUCCESS		1
 #define WDCP_CONNECTION_FAIL		0
 
+#define WDCP_AUTHENTICATE_SUCCESS	1
+#define WDCP_AUTHENTICATE_FAIL		0
+
 #define WDCP_CONN_REQ_PKT_LEN		9
 
 #define CONN_REQ_PKT			0x01
@@ -30,5 +33,12 @@ struct packet {
  *         返回WDCP_CONNECTION_FAIL为失败
  */
 extern int WD_wdcp_build_connection();
+
+/**
+ * 对客户端进行身份验证
+ * @return 返回WDCP_AUTHENTICATE_SUCCESS为成功
+ *         返回WDCP_AUTHENTICATE_FAIL为失败
+ */
+extern int WD_wdcp_authenticate();
 
 #endif

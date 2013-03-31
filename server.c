@@ -6,6 +6,7 @@
 
 #include "server.h"
 #include "config.h"
+#include "wdcp.h"
 
 int client_fd;
 
@@ -69,6 +70,8 @@ WD_server_main_loop()
 		if(pid == 0) {
 			// 子进程
 			WD_server_handle_connection();
+			close(client_fd);
+			exit(EXIT_SUCCESS);
 		} else if(pid == -1) {
 			err_info("fork for client new connection error");
 		}
@@ -82,5 +85,12 @@ WD_server_main_loop()
 void
 WD_server_handle_connection()
 {
-	
+	// 如果应用层建立连接失败则返回
+	if(WDCP_CONNECTION_SUCCESS != WD_wdcp_build_connection()) {
+		return;
+	}
+	// 如果应用层建立连接成功则进行认证，如果验证失败则返回
+	if(WDCP_AUTHENTICATE_SUCCESS != WD_wdcp_authenticate()) {
+		return;
+	}
 }

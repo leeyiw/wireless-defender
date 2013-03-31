@@ -68,6 +68,12 @@ WD_wdcp_build_connection()
 	return WDCP_CONNECTION_SUCCESS;
 }
 
+int
+WD_wdcp_authenticate()
+{
+	return WDCP_AUTHENTICATE_SUCCESS;
+}
+
 ssize_t
 WD_wdcp_recv(int sockfd, void *buf, size_t len, int flags)
 {
