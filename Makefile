@@ -5,10 +5,16 @@ SRC = src/
 
 TARGET = wireless-defender
 
-.PHONY: debug all clean
+.PHONY: debug dump offline all clean
 
 debug: CFLAGS += $(DEBUG_FLAGS)
-debug: all
+debug: clean all
+
+dump: CFLAGS += -DWD_DUMP
+dump: clean debug
+
+offline: CFLAGS += -DWD_OFFLINE
+offline: clean debug
 
 all: wireless-defender.o server.o wdcp.o capture.o analyse.o config.o utils.o
 	$(CC) -o $(TARGET) *.o -lpcap -lconfuse

@@ -3,6 +3,8 @@
 
 #include <pcap/pcap.h>
 
+#define WD_OFFLINE_FILE		"offline.pcap"
+
 extern void WD_capture_init(pcap_handler callback, int cnt,
 	u_char *callback_arg);
 extern void WD_capture_set_callback(pcap_handler callback);

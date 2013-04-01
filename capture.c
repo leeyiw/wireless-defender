@@ -6,9 +6,11 @@
 #include <inttypes.h>
 #include <unistd.h>
 
+#include "capture.h"
 #include "config.h"
 
 static pcap_t *device;
+static pcap_dumper_t *dump;
 static char errbuf[PCAP_ERRBUF_SIZE];
 static pcap_handler capture_callback;
 static int capture_cnt;
@@ -26,16 +28,34 @@ WD_capture_set_interface_mode(const char *interface, void *mode);
 void
 WD_capture_init(pcap_handler callback, int cnt, u_char *callback_arg)
 {
+
+#ifndef WD_OFFLINE
 	// 将网卡改为Monitor模式
 	WD_capture_set_interface_mode(g_capture_interface,
 		(void *)IW_MODE_MONITOR);
+#endif
 
 	// 初始化libpcap抓包设备
+#ifdef WD_OFFLINE
+	device = pcap_open_offline(WD_OFFLINE_FILE, errbuf);
+	if(device == NULL) {
+		user_exit1("open offline file %s error: %s",
+			WD_OFFLINE_FILE, errbuf);
+	}
+#else
 	device = pcap_open_live(g_capture_interface, 65535, 0, 0, errbuf);
 	if(device == NULL) {
 		user_exit1("open interface '%s' for capturing error: %s",
 			g_capture_interface, errbuf);
 	}
+#endif
+
+#ifdef WD_DUMP
+	dump = pcap_dump_open(device, WD_OFFLINE_FILE);
+	if(dump == NULL) {
+		user_exit1("%s", pcap_geterr(device));
+	}
+#endif
 
 	// 给内部变量赋值
 	capture_callback = callback;
@@ -82,8 +102,12 @@ WD_capture_start()
 {
 	int ret;
 
+#ifdef WD_DUMP
+	ret = pcap_loop(device, capture_cnt, pcap_dump, (u_char *)dump);
+#else
 	ret = pcap_loop(device, capture_cnt, capture_callback,
 		capture_callback_arg);
+#endif
 	if(ret == 0) {
 		user_info("capture count exhausted");
 	} else if(ret == -2) {
@@ -102,9 +126,16 @@ WD_capture_destory()
 	//关闭libpcap抓包设备
 	pcap_close(device);
 
+#ifdef WD_DUMP
+	// 关闭dump文件
+	pcap_dump_close(dump);
+#endif
+
+#ifndef WD_OFFLINE
 	// 将网卡改为Managed模式
 	WD_capture_set_interface_mode(g_capture_interface,
 		(void *)IW_MODE_INFRA);
+#endif
 }
 
 /**
