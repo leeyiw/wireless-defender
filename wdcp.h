@@ -1,25 +1,31 @@
 #ifndef _WDCP_H
 #define _WDCP_H
 
+/* 连接过程中的宏定义 */
 #define WDCP_CONNECTION_SUCCESS		1
 #define WDCP_CONNECTION_FAIL		0
 
+#define WDCP_CONN_REQ_PKT_LEN		9
+
+#define CONN_REQ_PKT				0x01
+#define CONN_RSP_PKT				0x02
+#define CONN_FAIL_PKT				0x03
+
+#define SEC_TYPE_STANDARD			0x00000000
+#define SEC_TYPE_SSL				0x00000001
+
+#define FAILED_PROTOCOL_ERR			0x00000001
+#define FAILED_SSL_REQUIRED			0x00000002
+
+/* 认证过程中的宏定义 */
 #define WDCP_AUTHENTICATE_SUCCESS	1
 #define WDCP_AUTHENTICATE_FAIL		0
 
-#define WDCP_CONN_REQ_PKT_LEN		9
+#define AUTH_REQ_PKT				0x01
+#define AUTH_RSP_PKT				0x02
+#define AUTH_FAIL_PKT				0x03
 
-#define CONN_REQ_PKT			0x01
-#define CONN_RSP_PKT			0x02
-#define CONN_FAIL_PKT			0x03
-
-#define SEC_TYPE_STANDARD		0x00000000
-#define SEC_TYPE_SSL			0x00000001
-
-#define FAILED_PROTOCOL_ERR		0x00000001
-#define FAILED_SSL_REQUIRED_BY_SERVER	0x00000002
-
-#define WDCP_PACKET_LEN			4096
+#define WDCP_PACKET_LEN				4096
 
 struct packet {
 	uint8_t *buf;

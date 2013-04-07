@@ -31,9 +31,52 @@ WD_wdcp_build_connection()
 	uint8_t type;
 	uint32_t version, security_type;
 
-
 	WD_wdcp_new_pkt(&p);
 	// 接收请求连接数据包
+	WD_wdcp_recv_pkt(&p);
+	// 如果数据包长度大于规定长度则发送连接失败数据包
+	if(p.len != WDCP_CONN_REQ_PKT_LEN) {
+		goto fail;
+	}
+	// 如果数据包类型不为请求连接数据包则发送连接失败数据包
+	WD_wdcp_packet_read_u8(&p, &type);
+	if(type != CONN_REQ_PKT) {
+		goto fail;
+	}
+	// 如果版本号不为0x00010000则发送连接失败数据包
+	WD_wdcp_packet_read_u32(&p, &version);
+	if(version != 0x00010000) {
+		goto fail;
+	}
+	// 记录客户支持的加密方式
+	WD_wdcp_packet_read_u32(&p, &security_type);
+	
+	// 发送连接响应数据包
+	WD_wdcp_rst_pkt(&p);
+	WD_wdcp_packet_write_u8(&p, CONN_RSP_PKT);
+	WD_wdcp_packet_write_u32(&p, SEC_TYPE_STANDARD);
+	WD_wdcp_send_pkt(&p);
+	WD_wdcp_del_pkt(&p);
+	return WDCP_CONNECTION_SUCCESS;
+
+fail:
+	// 发送连接失败数据包
+	WD_wdcp_rst_pkt(&p);
+	WD_wdcp_packet_write_u8(&p, CONN_FAIL_PKT);
+	WD_wdcp_packet_write_u32(&p, FAILED_PROTOCOL_ERR);
+	WD_wdcp_send_pkt(&p);
+	WD_wdcp_del_pkt(&p);
+	return WDCP_CONNECTION_FAIL;
+}
+
+int
+WD_wdcp_authenticate()
+{
+	struct packet p;
+	uint8_t type;
+
+	WD_wdcp_new_pkt(&p);
+	// 接收认证请求数据包
 	WD_wdcp_recv_pkt(&p);
 	// 如果数据包长度大于规定长度则发送连接失败数据包
 	if(p.len != WDCP_CONN_REQ_PKT_LEN) {
@@ -41,37 +84,16 @@ WD_wdcp_build_connection()
 		WD_wdcp_send_conn_fail_pkt(FAILED_PROTOCOL_ERR);
 		return WDCP_CONNECTION_FAIL;
 	}
-	// 如果数据包类型不为请求连接数据包则发送连接失败数据包
-	WD_wdcp_packet_read_u8(&p, &type);
-	if(type != CONN_REQ_PKT) {
-		WD_wdcp_del_pkt(&p);
-		WD_wdcp_send_conn_fail_pkt(FAILED_PROTOCOL_ERR);
-		return WDCP_CONNECTION_FAIL;
-	}
-	// 如果版本号不为0x00010000则发送连接失败数据包
-	WD_wdcp_packet_read_u32(&p, &version);
-	if(version != 0x00010000) {
-		WD_wdcp_del_pkt(&p);
-		WD_wdcp_send_conn_fail_pkt(FAILED_PROTOCOL_ERR);
-		return WDCP_CONNECTION_FAIL;
-	}
-	// 记录客户支持的加密方式
-	WD_wdcp_packet_read_u32(&p, &security_type);
-	
 
-	// 发送连接响应数据包
-	WD_wdcp_rst_pkt(&p);
-	WD_wdcp_packet_write_u8(&p, CONN_RSP_PKT);
-	WD_wdcp_packet_write_u32(&p, SEC_TYPE_STANDARD);
-	WD_wdcp_send_pkt(&p);
-
-	return WDCP_CONNECTION_SUCCESS;
-}
-
-int
-WD_wdcp_authenticate()
-{
 	return WDCP_AUTHENTICATE_SUCCESS;
+
+fail:
+	// 发送认证失败数据包
+	WD_wdcp_rst_pkt(&p);
+	WD_wdcp_packet_write_u8(&p, AUTH_FAIL_PKT);
+	WD_wdcp_send_pkt(&p);
+	WD_wdcp_del_pkt(&p);
+	return WDCP_AUTHENTICATE_FAIL;
 }
 
 ssize_t
@@ -172,18 +194,4 @@ void
 WD_wdcp_packet_read_u32(struct packet *p, uint32_t *data)
 {
 	WD_wdcp_packet_read_n(p, data, sizeof(*data));
-}
-
-void
-WD_wdcp_send_conn_fail_pkt(uint32_t failure_code)
-{
-	struct packet pkt;
-
-	WD_wdcp_new_pkt(&pkt);
-
-	WD_wdcp_packet_write_u8(&pkt, CONN_FAIL_PKT);
-	WD_wdcp_packet_write_u32(&pkt, failure_code);
-	WD_wdcp_send_pkt(&pkt);
-
-	WD_wdcp_del_pkt(&pkt);
 }
