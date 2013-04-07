@@ -70,8 +70,7 @@ WD_server_main_loop()
 		if(pid == 0) {
 			// 子进程
 			WD_server_handle_connection();
-			close(client_fd);
-			exit(EXIT_SUCCESS);
+			return;
 		} else if(pid == -1) {
 			err_info("fork for client new connection error");
 		}
