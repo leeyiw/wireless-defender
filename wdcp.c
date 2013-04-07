@@ -22,8 +22,6 @@ static void WD_wdcp_packet_read_n(struct packet *p, void *data, size_t len);
 static void WD_wdcp_packet_read_u8(struct packet *p, uint8_t *data);
 static void WD_wdcp_packet_read_u32(struct packet *p, uint32_t *data);
 
-static void WD_wdcp_send_conn_fail_pkt(uint32_t failure_code);
-
 int
 WD_wdcp_build_connection()
 {
@@ -74,17 +72,36 @@ WD_wdcp_authenticate()
 {
 	struct packet p;
 	uint8_t type;
+	uint8_t username_len, password_len;
+	char username[256], password[256];
 
 	WD_wdcp_new_pkt(&p);
 	// 接收认证请求数据包
 	WD_wdcp_recv_pkt(&p);
-	// 如果数据包长度大于规定长度则发送连接失败数据包
-	if(p.len != WDCP_CONN_REQ_PKT_LEN) {
-		WD_wdcp_del_pkt(&p);
-		WD_wdcp_send_conn_fail_pkt(FAILED_PROTOCOL_ERR);
-		return WDCP_CONNECTION_FAIL;
+	// 如果数据包类型不为请求连接数据包则发送连接失败数据包
+	WD_wdcp_packet_read_u8(&p, &type);
+	if(type != AUTH_REQ_PKT) {
+		goto fail;
 	}
-
+	// 提取username_len与username
+	WD_wdcp_packet_read_u8(&p, &username_len);
+	WD_wdcp_packet_read_n(&p, username, username_len);
+	if(username[username_len - 1] != '\0') {
+		goto fail;
+	}
+	// 提取password_len与password
+	WD_wdcp_packet_read_u8(&p, &password_len);
+	WD_wdcp_packet_read_n(&p, password, password_len);
+	if(password[password_len - 1] != '\0') {
+		goto fail;
+	}
+	// TODO 进行用户名密码认证
+	
+	// 发送认证成功数据包
+	WD_wdcp_rst_pkt(&p);
+	WD_wdcp_packet_write_u8(&p, AUTH_RSP_PKT);
+	WD_wdcp_send_pkt(&p);
+	WD_wdcp_del_pkt(&p);
 	return WDCP_AUTHENTICATE_SUCCESS;
 
 fail:

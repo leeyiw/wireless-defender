@@ -10,14 +10,18 @@
 #include "config.h"
 
 static pcap_t *device;
-static pcap_dumper_t *dump;
 static char errbuf[PCAP_ERRBUF_SIZE];
 static pcap_handler capture_callback;
 static int capture_cnt;
 static u_char *capture_callback_arg;
 
-static void
-WD_capture_set_interface_mode(const char *interface, void *mode);
+#ifdef WD_DUMP
+static pcap_dumper_t *dump;
+#endif
+
+#ifndef WD_OFFLINE
+static void WD_capture_set_interface_mode(const char *interface, void *mode);
+#endif
 
 /** 
  * 初始化capture模块
@@ -141,6 +145,7 @@ WD_capture_destory()
 /**
  * 设置网卡的运行模式
  */
+#ifndef WD_OFFLINE
 static void
 WD_capture_set_interface_mode(const char *interface, void *mode)
 {
@@ -179,3 +184,4 @@ WD_capture_set_interface_mode(const char *interface, void *mode)
 	// 关闭套接字描述符
 	close(sockfd);
 }
+#endif
