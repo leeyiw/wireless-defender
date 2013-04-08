@@ -118,7 +118,7 @@ WD_wdcp_recv(int sockfd, void *buf, size_t len, int flags)
 {
 	ssize_t n;
 
-	n = recv(client_fd, buf, sizeof(buf), 0);
+	n = recv(client_fd, buf, len, 0);
 	if(n == -1) {
 		err_exit("receive data from client error");
 	}
