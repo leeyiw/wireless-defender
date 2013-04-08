@@ -39,7 +39,7 @@ WD_server_init()
 	// 设置网卡地址
 	listen_addr = (struct sockaddr_in *)&ifr.ifr_addr;
 	listen_addr->sin_family = AF_INET;
-	listen_addr->sin_port = WD_SERVER_LISTEN_PORT;
+	listen_addr->sin_port = htons(WD_SERVER_LISTEN_PORT);
 	// bind网卡地址
 	if(-1 == bind(listen_fd, (struct sockaddr *)listen_addr,
 		sizeof(struct sockaddr_in))) {
