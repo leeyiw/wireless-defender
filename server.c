@@ -9,6 +9,8 @@
 #include "wdcp.h"
 
 int client_fd;
+/* server模块子进程id号 */
+pid_t server_pid;
 
 static int listen_fd;
 
