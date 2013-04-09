@@ -3,15 +3,16 @@
 ## 目录
 * [1 协议简介](#introduction)
  - [1.1 通用规范](#common-specification)
- - [1.2 连接建立过程](#connection-sequence)
- - [1.3 客户端认证过程](#client-authenticate)
-* [2 协议定义](#protocol-definition)
+ - [1.2 连接建立过程简介](#connection-sequence-introduction)
+ - [1.3 客户端认证过程简介](#client-authenticate-introduction)
+* [2 连接建立过程](#connection-sequence)
  - [2.1 连接请求数据包](#connection-request-packet)
  - [2.2 连接响应数据包](#connection-response-packet)
  - [2.3 连接失败数据包](#connection-failure-packet)
- - [2.4 认证请求数据包](#authenticate-request-packet)
- - [2.5 认证响应数据包](#authenticate-response-packet)
- - [2.6 认证失败数据包](#authenticate-failure-packet)
+* [3 客户端认证过程](#client-authenticate)
+ - [3.1 认证请求数据包](#authenticate-request-packet)
+ - [3.2 认证响应数据包](#authenticate-response-packet)
+ - [3.3 认证失败数据包](#authenticate-failure-packet)
 
 <a name="introduction"></a>
 ## 1 协议简介
@@ -22,7 +23,7 @@
 1. 本协议中的多字节位除了特别说明的以外，均采用 **小端序** 传输
 2. 本协议中客户端与服务器通信采用TCP协议，服务器监听的端口号为9387
 
-<a name="connection-sequence"></a>
+<a name="connection-sequence-introduction"></a>
 ### 1.2 连接建立过程
 client        ---->        server  
 发送[连接请求数据包](#connection-request-packet)，服务器进行验证
@@ -31,7 +32,7 @@ client        <----        server
 如果连接成功，发送[连接响应数据包](#connection-response-packet)，完成连接建立  
 如果连接失败，发送[连接失败数据包](#connection-failure-packet)，然后断开TCP连接
 
-<a name="client-authenticate"></a>
+<a name="client-authenticate-introduction"></a>
 ### 1.3 客户端认证过程
 client        ---->        server  
 发送[认证请求数据包](#authenticate-request-packet)，服务器进行认证
@@ -41,8 +42,8 @@ client        <----        server
 如果认证失败，发送[认证失败数据包](#authenticate-failure-packet)，然后断开TCP连接
 
 
-<a name="protocol-definition"></a>
-## 2 协议定义
+<a name="connection-sequence"></a>
+## 2 连接建立过程
 
 <a name="connection-request-packet"></a>
 ### 2.1 连接请求数据包
@@ -124,8 +125,12 @@ failure_code (4 bytes): 四字节无符号整形，连接失败的错误码，�
 	</tr>
 </table>
 
+
+<a name="client-authenticate"></a>
+## 3 客户端认证过程
+
 <a name="authenticate-request-packet"></a>
-### 2.4 认证请求数据包
+### 3.1 认证请求数据包
 认证请求数据包是服务器用于认证客户端合法性的数据包，这个数据包是连接建立之后客户端发送的第一个数据包。包含了管理服务器的用户名与加密后的密码。数据包内容如下：
 
 type (1 byte): 一字节无符号整形。认证请求数据包的类型，这个字段的值必须为0x01(AUTH_REQ_PKT)。
@@ -139,13 +144,13 @@ password_len (1 byte): 一字节无符号整形。password字段的长度，包�
 password (variable): 密码字段，密码使用MD5加密，使用ASCII码小写字母表示，以'\0'字符结尾。
 
 <a name="authenticate-response-packet"></a>
-### 2.5 认证响应数据包
+### 3.2 认证响应数据包
 认证响应数据包是服务器收到客户端发出的[认证请求数据包](#authenticate-request-packet)后，服务器判断客户端账户合法，然后发送给客户端的数据包。数据包内容如下：
 
 type (1 byte): 一字节无符号整形。认证响应数据包的类型，这个字段的值必须为0x02(AUTH_RSP_PKT)。
 
 <a name="authenticate-failure-packet"></a>
-### 2.6 认证失败数据包
+### 3.3 认证失败数据包
 认证失败数据包是服务器收到客户端发出的[认证请求数据包](#authenticate-request-packet)后，服务器判断客户端账户不合法，然后发送给客户端的数据包。服务器发送完本数据包后，应该关闭TCP认证的读和写。客户端收到本数据包后，应该关闭TCP认证的读和写。数据包内容如下：
 
 type (1 byte): 一字节无符号整形。认证响应数据包的类型，这个字段的值必须为0x03(AUTH_FAIL_PKT)。
