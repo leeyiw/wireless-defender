@@ -24,7 +24,7 @@
 2. 本协议中客户端与服务器通信采用TCP协议，服务器监听的端口号为9387
 
 <a name="connection-sequence-introduction"></a>
-### 1.2 连接建立过程
+### 1.2 连接建立过程简介
 client        ---->        server  
 发送[连接请求数据包](#connection-request-packet)，服务器进行验证
 
@@ -32,14 +32,18 @@ client        <----        server
 如果连接成功，发送[连接响应数据包](#connection-response-packet)，完成连接建立  
 如果连接失败，发送[连接失败数据包](#connection-failure-packet)，然后断开TCP连接
 
+详细的连接建立通信格式参见[连接建立过程](#connection-sequence)。
+
 <a name="client-authenticate-introduction"></a>
-### 1.3 客户端认证过程
+### 1.3 客户端认证过程简介
 client        ---->        server  
 发送[认证请求数据包](#authenticate-request-packet)，服务器进行认证
 
 client        <----        server  
 如果认证成功，发送[认证响应数据包](#authenticate-response-packet)，完成认证  
 如果认证失败，发送[认证失败数据包](#authenticate-failure-packet)，然后断开TCP连接
+
+详细的客户端认证通信格式参见[客户端认证过程](#client-authenticate)。
 
 
 <a name="connection-sequence"></a>
