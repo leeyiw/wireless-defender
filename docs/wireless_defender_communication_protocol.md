@@ -143,9 +143,7 @@ username_len (1 byte): 一字节无符号整形。username字段的长度，包�
 
 username (variable): 用户名字段，使用ASCII码表示，以'\0'字符结尾。
 
-password_len (1 byte): 一字节无符号整形。password字段的长度，包括结尾的'\0'字符。
-
-password (variable): 密码字段，密码使用MD5加密，使用ASCII码小写字母表示，以'\0'字符结尾。
+password (32 bytes): 32字节的密码字段，密码使用MD5加密，使用ASCII码小写字母表示。
 
 <a name="authenticate-response-packet"></a>
 ### 3.2 认证响应数据包
