@@ -34,6 +34,8 @@ analyse_manage.o: analyse_manage.c analyse_manage.h
 	$(CC) $(CFLAGS) analyse_manage.c
 analyse_control.o: analyse_control.c analyse_control.h
 	$(CC) $(CFLAGS) analyse_control.c
+analyse_data.o: analyse_data.c analyse_data.h
+	$(CC) $(CFLAGS) analyse_data.c
 config.o: config.c config.h
 	$(CC) $(CFLAGS) config.c
 utils.o: utils.c utils.h
