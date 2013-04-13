@@ -7,6 +7,7 @@
 #include "analyse.h"
 #include "server.h"
 #include "utils.h"
+#include "analyse.h"
 
 /* 起始运行时间 */
 struct timeval WD_start_time;
@@ -25,6 +26,41 @@ WD_init()
 	WD_config_init();
 }
 
+void 
+WD_analyse_test(u_char *user, const struct pcap_pkthdr *h,
+	const u_char *bytes)
+{
+
+	if(user != (u_char *)1) {
+		return;
+	}
+	user_info1("capture packet len: %d, packet len: %d", 
+			h->caplen, h->len);
+	frame_info *fi = deal_frame_info(bytes);
+
+	/*for(i = 0; i < 6; i++) {
+		printf("%x ", fi->da[i]);	
+	}
+	printf("%d %d\n", fi->frame_num, fi->seq_num);
+	for(i = 0; i < 2; i++) {
+		printf("%x ", fi->mb->interval[i]);
+	}*/
+
+	/*for(i = 0; i < 16; i++) {
+		printf("%x ", fi->mb->cap_info[i]);	
+	}*/
+
+	//printf("%s\n", fi->mb->ssid);
+	
+	//printf("%d ", fi->mb->sr_tag_num);
+	
+	/*for(i = 0; i < 8; i++) {
+		printf("%x ", fi->mb->support_rates[i]);	
+	}*/
+
+	//printf("%d ", fi->mb->channel);
+}
+
 /**
  * 主程序全局清理函数
  */
@@ -40,23 +76,23 @@ main(int argc, char *argv[])
 
 	//server_pid = fork();
 	//if(server_pid == 0) {
-		// 子进程，监听并处理客户端连接请求
+	//	// 子进程，监听并处理客户端连接请求
 
-		// 初始化服务器模块
-		WD_server_init();
+	//	// 初始化服务器模块
+	//	WD_server_init();
 		// 监听客户端连接请求
-		WD_server_main_loop();
+	//	WD_server_main_loop();
 
-		return EXIT_SUCCESS;
+	//	//return EXIT_SUCCESS;
 	//} else if(server_pid != -1) {
 	//	// 父进程，进行抓包
 
 	//	// 初始化抓包模块
-	//	WD_capture_init(WD_analyse_test, 10, (u_char *)1);
+	WD_capture_init(WD_analyse_test, 1, (u_char *)1);
 	//	// 启动抓包
-	//	WD_capture_start();
+	WD_capture_start();
 	//	// 关闭抓包模块
-	//	WD_capture_destory();
+	WD_capture_destory();
 	//	// 清理抓包模块
 	//	WD_destory();
 
