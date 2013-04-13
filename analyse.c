@@ -3,19 +3,6 @@
 #include "analyse_data.h"
 #include "analyse_control.h"
 
-/*void
-WD_analyse_test(u_char *user, const struct pcap_pkthdr *h,
-	const u_char *bytes)
-{
-
-	if(user != (u_char *)1) {
-		return;
-	}
-	user_info1("capture packet len: %d, packet len: %d", 
-			h->caplen, h->len);
-	//deal_frame_info(bytes);
-}*/
-
 frame_info*
 deal_frame_info(const u_char *bytes)
 {
@@ -115,46 +102,4 @@ deal_frame_body(frame_info **fi_ptr, const u_char *bytes)
 			//deal_control_body(fi_ptr, bytes);
 			break;
 	}
-}
-
-int
-main(int argc, char *argv[])
-{
-	/*WD_config_init();
-
-	WD_capture_init(WD_analyse_test, 1, (u_char *)1);
-	WD_capture_start();
-	WD_capture_destory();
-	FILE *fp = fopen("offline.pcap", "r");
-	unsigned char a[105];
-	u_char b[605];
-	int i;
-	
-	fread(a, sizeof(unsigned char), 40, fp);
-	fread(b, sizeof(u_char), 600, fp);
-
-	frame_info *fi = deal_frame_info(b);
-
-	for(i = 0; i < 6; i++) {
-		printf("%x ", fi->da[i]);	
-	}
-	printf("%d %d\n", fi->frame_num, fi->seq_num);
-	for(i = 0; i < 2; i++) {
-		printf("%x ", fi->mb->interval[i]);
-	}*/
-
-	/*for(i = 0; i < 16; i++) {
-		printf("%x ", fi->mb->cap_info[i]);	
-	}*/
-
-	//printf("%s\n", fi->mb->ssid);
-	
-	//printf("%d ", fi->mb->sr_tag_num);
-	
-	/*for(i = 0; i < 8; i++) {
-		printf("%x ", fi->mb->support_rates[i]);	
-	}*/
-
-	/*printf("%d ", fi->mb->channel);*/
-	return 0;
 }
