@@ -1,6 +1,8 @@
 #ifndef _WDCP_H
 #define _WDCP_H
 
+#define WDCP_PACKET_LEN				4096
+
 /* 连接过程中的宏定义 */
 #define WDCP_CONNECTION_SUCCESS		1
 #define WDCP_CONNECTION_FAIL		0
@@ -25,7 +27,12 @@
 #define AUTH_RSP_PKT				0x02
 #define AUTH_FAIL_PKT				0x03
 
-#define WDCP_PACKET_LEN				4096
+#define AUTH_DEFAULT_USERNAME		"wdadmin"
+#define AUTH_DEFAULT_PASSWORD		"wdadmin"
+
+#define AUTH_CHECK_SUCCESS			1
+#define AUTH_CHECK_FAIL				0
+
 
 struct packet {
 	uint8_t *buf;

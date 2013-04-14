@@ -19,7 +19,7 @@ offline: CFLAGS += -DWD_OFFLINE
 offline: clean debug
 
 all: $(OBJ)
-	$(CC) -o $(TARGET) $(OBJ) -lpcap -lconfuse
+	$(CC) -o $(TARGET) $(OBJ) -lpcap -lconfuse -lssl
 wireless-defender.o: wireless-defender.c wireless-defender.h
 	$(CC) $(CFLAGS) wireless-defender.c
 server.o: server.c server.h
