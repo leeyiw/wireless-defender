@@ -5,6 +5,7 @@
  - [1.1 通用规范](#common-specification)
  - [1.2 连接建立过程简介](#connection-sequence-introduction)
  - [1.3 客户端认证过程简介](#client-authenticate-introduction)
+ - [1.4 数据请求过程简介](#data-request-introduction)
 * [2 连接建立过程](#connection-sequence)
  - [2.1 连接请求数据包](#connection-request-packet)
  - [2.2 连接响应数据包](#connection-response-packet)
@@ -45,6 +46,16 @@ client        <----        server
 
 详细的客户端认证通信格式参见[客户端认证过程](#client-authenticate)。
 
+<a name="data-request-introduction"></a>
+### 1.4 数据请求过程简介
+client        ---->        server  
+发送含有[数据请求头部](#data-request-packet-header)的数据包，向服务器请求数据
+
+client        <----        server  
+如果请求成功，发送含有[数据响应头部](#data-response-packet-header)的数据包，返回数据  
+如果请求失败，发送[数据请求失败数据包](#data-failure-packet)，然后继续监听后续请求
+
+详细的数据请求通信格式参见[数据请求过程](#data-request)。
 
 <a name="connection-sequence"></a>
 ## 2 连接建立过程
