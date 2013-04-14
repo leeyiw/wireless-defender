@@ -15,6 +15,7 @@
  - [3.2 认证响应数据包](#authenticate-response-packet)
  - [3.3 认证失败数据包](#authenticate-failure-packet)
 * [4 数据请求过程](#data-request)
+ - [4.1 数据请求头部](#data-request-packet-header)
 
 <a name="introduction"></a>
 ## 1 协议简介
