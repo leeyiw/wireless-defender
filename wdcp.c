@@ -72,8 +72,8 @@ WD_wdcp_authenticate()
 {
 	struct packet p;
 	uint8_t type;
-	uint8_t username_len, password_len;
-	char username[256], password[256];
+	uint8_t username_len;
+	char username[256], password[32];
 
 	WD_wdcp_new_pkt(&p);
 	// 接收认证请求数据包
@@ -89,12 +89,8 @@ WD_wdcp_authenticate()
 	if(username[username_len - 1] != '\0') {
 		goto fail;
 	}
-	// 提取password_len与password
-	WD_wdcp_packet_read_u8(&p, &password_len);
-	WD_wdcp_packet_read_n(&p, password, password_len);
-	if(password[password_len - 1] != '\0') {
-		goto fail;
-	}
+	// 提取password
+	WD_wdcp_packet_read_n(&p, password, sizeof(password));
 	// TODO 进行用户名密码认证
 	
 	// 发送认证成功数据包
