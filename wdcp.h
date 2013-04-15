@@ -33,6 +33,14 @@
 #define AUTH_CHECK_SUCCESS			1
 #define AUTH_CHECK_FAIL				0
 
+#define FAILED_AUTH_CHECK			0x00000002
+
+/* 通信过程中的宏定义 */
+#define WDCP_PROCESS_SUCCESS		1
+#define WDCP_PROCESS_FAIL			0
+
+#define DATA_REQ_PKT				0x01
+
 
 struct packet {
 	uint8_t *buf;
@@ -53,5 +61,12 @@ extern int WD_wdcp_build_connection();
  *         返回WDCP_AUTHENTICATE_FAIL为失败
  */
 extern int WD_wdcp_authenticate();
+
+/**
+ * 与客户端进行数据通信
+ * @return 返回WDCP_PROCESS_SUCCESS为成功
+ *         返回WDCP_PROCESS_FAIL为失败
+ */
+extern int WD_wdcp_process();
 
 #endif

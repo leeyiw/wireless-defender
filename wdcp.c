@@ -11,6 +11,7 @@
 
 static int WD_wdcp_check_login(const char *username, uint8_t username_len,
 	const char *password);
+static int WD_wdcp_process_data_request(struct packet *p);
 
 static ssize_t WD_wdcp_recv(int sockfd, void *buf, size_t len, int flags);
 static ssize_t WD_wdcp_send(int sockfd, void *buf, size_t len, int flags);
@@ -78,6 +79,7 @@ WD_wdcp_authenticate()
 	uint8_t type;
 	uint8_t username_len;
 	char username[256], password[32];
+	uint32_t failure_code = FAILED_PROTOCOL_ERR;
 
 	WD_wdcp_new_pkt(&p);
 	// 接收认证请求数据包
@@ -98,6 +100,7 @@ WD_wdcp_authenticate()
 	// 进行用户名密码认证
 	if(AUTH_CHECK_FAIL ==
 		WD_wdcp_check_login(username, username_len, password)) {
+		failure_code = FAILED_AUTH_CHECK;
 		goto fail;
 	}
 	
@@ -112,9 +115,32 @@ fail:
 	// 发送认证失败数据包
 	WD_wdcp_rst_pkt(&p);
 	WD_wdcp_packet_write_u8(&p, AUTH_FAIL_PKT);
+	WD_wdcp_packet_write_u32(&p, failure_code);
 	WD_wdcp_send_pkt(&p);
 	WD_wdcp_del_pkt(&p);
 	return WDCP_AUTHENTICATE_FAIL;
+}
+
+int
+WD_wdcp_process()
+{
+	struct packet p;
+	uint8_t type;
+
+	WD_wdcp_new_pkt(&p);
+	// 接收数据通信数据包
+	WD_wdcp_recv_pkt(&p);
+	// 取出数据包类型
+	WD_wdcp_packet_read_u8(&p, &type);
+	// 根据不同类型，进行不同处理
+	switch(type) {
+	case DATA_REQ_PKT:
+		return WD_wdcp_process_data_request(&p);
+		break;
+	default:
+		return WDCP_PROCESS_FAIL;
+		break;
+	}
 }
 
 static int
@@ -145,6 +171,17 @@ WD_wdcp_check_login(const char *username, uint8_t username_len,
 
 fail:
 	return AUTH_CHECK_FAIL;
+}
+
+static int
+WD_wdcp_process_data_request(struct packet *p)
+{
+	uint8_t request_type;
+
+	// 取request_type
+	WD_wdcp_packet_read_u8(p, &request_type);
+
+	return WDCP_PROCESS_SUCCESS;
 }
 
 static ssize_t
