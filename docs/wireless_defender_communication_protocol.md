@@ -190,6 +190,26 @@ type (1 byte): 一字节无符号整形。认证响应数据包的类型，这�
 
 type (1 byte): 一字节无符号整形。认证失败数据包的类型，这个字段的值必须为0x03(AUTH_FAIL_PKT)。
 
+failure_code (4 bytes): 四字节无符号整形，认证失败的错误码，取值如下：
+
+<table>
+	<tr>
+		<td>failure_code</td>
+		<td>&#20540;</td>
+		<td>&#21547;&#20041;</td>
+	</tr>
+	<tr>
+		<td>FAILED_PROTOCOL_ERR</td>
+		<td>0x00000001</td>
+		<td>&#21327;&#35758;&#38169;&#35823;</td>
+	</tr>
+	<tr>
+		<td>FAILED_AUTH_CHECK</td>
+		<td>0x00000002</td>
+		<td>&#36523;&#20221;&#39564;&#35777;&#38169;&#35823;</td>
+	</tr>
+</table>
+
 
 <a name="data-request"></a>
 ## 4 数据请求过程
