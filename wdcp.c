@@ -4,14 +4,18 @@
 #include <stdlib.h>
 #include <string.h>
 #include <openssl/md5.h>
+#include <time.h>
 
+#include "wireless-defender.h"
 #include "wdcp.h"
 #include "server.h"
 #include "utils.h"
 
 static int WD_wdcp_check_login(const char *username, uint8_t username_len,
 	const char *password);
-static int WD_wdcp_process_data_request(struct packet *p);
+static int WD_wdcp_process_data_req(struct packet *p);
+static int WD_wdcp_req_basic_info(struct packet *p);
+static int WD_wdcp_req_ap_list(struct packet *p);
 
 static ssize_t WD_wdcp_recv(int sockfd, void *buf, size_t len, int flags);
 static ssize_t WD_wdcp_send(int sockfd, void *buf, size_t len, int flags);
@@ -23,6 +27,7 @@ static void WD_wdcp_recv_pkt(struct packet *p);
 static void WD_wdcp_packet_write_n(struct packet *p, void *data, size_t len);
 static void WD_wdcp_packet_write_u8(struct packet *p, uint8_t data);
 static void WD_wdcp_packet_write_u32(struct packet *p, uint32_t data);
+static void WD_wdcp_packet_write_u64(struct packet *p, uint64_t data);
 static void WD_wdcp_packet_read_n(struct packet *p, void *data, size_t len);
 static void WD_wdcp_packet_read_u8(struct packet *p, uint8_t *data);
 static void WD_wdcp_packet_read_u32(struct packet *p, uint32_t *data);
@@ -126,6 +131,7 @@ WD_wdcp_process()
 {
 	struct packet p;
 	uint8_t type;
+	int result;
 
 	WD_wdcp_new_pkt(&p);
 	// 接收数据通信数据包
@@ -135,12 +141,16 @@ WD_wdcp_process()
 	// 根据不同类型，进行不同处理
 	switch(type) {
 	case DATA_REQ_PKT:
-		return WD_wdcp_process_data_request(&p);
+		result = WD_wdcp_process_data_req(&p);
 		break;
 	default:
-		return WDCP_PROCESS_FAIL;
+		result = WDCP_PROCESS_FAIL;
 		break;
 	}
+	
+	WD_wdcp_del_pkt(&p);
+
+	return result;
 }
 
 static int
@@ -174,13 +184,43 @@ fail:
 }
 
 static int
-WD_wdcp_process_data_request(struct packet *p)
+WD_wdcp_process_data_req(struct packet *p)
 {
-	uint8_t request_type;
+	uint8_t req_type;
 
 	// 取request_type
-	WD_wdcp_packet_read_u8(p, &request_type);
+	WD_wdcp_packet_read_u8(p, &req_type);
+	switch(req_type) {
+	case REQ_TYPE_BASIC_INFO:
+		WD_wdcp_req_basic_info(p);
+		break;
+	case REQ_TYPE_AP_LIST:
+		WD_wdcp_req_ap_list(p);
+		break;
+	default:
+		break;
+	}
 
+	return WDCP_PROCESS_SUCCESS;
+}
+
+static int
+WD_wdcp_req_basic_info(struct packet *p)
+{
+	WD_wdcp_rst_pkt(p);
+
+	// 写入运行时间
+	WD_wdcp_packet_write_u64(p, time(NULL) - WD_start_time);
+
+	// 发送数据包
+	WD_wdcp_send_pkt(p);
+
+	return WDCP_PROCESS_SUCCESS;
+}
+
+static int
+WD_wdcp_req_ap_list(struct packet *p)
+{
 	return WDCP_PROCESS_SUCCESS;
 }
 
@@ -261,6 +301,12 @@ WD_wdcp_packet_write_u8(struct packet *p, uint8_t data)
 
 static void
 WD_wdcp_packet_write_u32(struct packet *p, uint32_t data)
+{
+	WD_wdcp_packet_write_n(p, &data, sizeof(data));
+}
+
+static void
+WD_wdcp_packet_write_u64(struct packet *p, uint64_t data)
 {
 	WD_wdcp_packet_write_n(p, &data, sizeof(data));
 }
