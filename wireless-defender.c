@@ -26,41 +26,6 @@ WD_init()
 	WD_config_init();
 }
 
-void 
-WD_analyse_test(u_char *user, const struct pcap_pkthdr *h,
-	const u_char *bytes)
-{
-
-	if(user != (u_char *)1) {
-		return;
-	}
-	user_info1("capture packet len: %d, packet len: %d", 
-			h->caplen, h->len);
-	frame_info *fi = deal_frame_info(bytes);
-
-	/*for(i = 0; i < 6; i++) {
-		printf("%x ", fi->da[i]);	
-	}
-	printf("%d %d\n", fi->frame_num, fi->seq_num);
-	for(i = 0; i < 2; i++) {
-		printf("%x ", fi->mb->interval[i]);
-	}*/
-
-	/*for(i = 0; i < 16; i++) {
-		printf("%x ", fi->mb->cap_info[i]);	
-	}*/
-
-	//printf("%s\n", fi->mb->ssid);
-	
-	//printf("%d ", fi->mb->sr_tag_num);
-	
-	/*for(i = 0; i < 8; i++) {
-		printf("%x ", fi->mb->support_rates[i]);	
-	}*/
-
-	//printf("%d ", fi->mb->channel);
-}
-
 /**
  * 主程序全局清理函数
  */
@@ -91,6 +56,7 @@ main(int argc, char *argv[])
 	WD_capture_init(WD_analyse_test, 1, (u_char *)1);
 	//	// 启动抓包
 	WD_capture_start();
+
 	//	// 关闭抓包模块
 	WD_capture_destory();
 	//	// 清理抓包模块
@@ -101,6 +67,6 @@ main(int argc, char *argv[])
 	//	// 异常情况
 	//	err_exit("create process error");
 	//}
-
+	
 	return EXIT_SUCCESS;
 }

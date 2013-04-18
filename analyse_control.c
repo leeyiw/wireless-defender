@@ -1,7 +1,7 @@
 #include "analyse_control.h"
 
 void
-deal_control_mac(frame_info **fi_ptr, const u_char *bytes) 
+deal_control_mac(struct frame_info **fi_ptr, const uint8_t *bytes) 
 {
 	switch((*fi_ptr)->subtype) {
 		case 5:

@@ -2,86 +2,149 @@
 #include "analyse.h"
 
 void
-deal_manage_mac(frame_info **fi_ptr, const u_char *bytes) 
+deal_manage_mac(struct frame_info **fi_ptr, const uint8_t *bytes) 
 {
-	memcpy((*fi_ptr)->da, &bytes[22], 6);
-	memcpy((*fi_ptr)->sa, &bytes[28], 6);
-	memcpy((*fi_ptr)->bssid, &bytes[34], 6);
-	(*fi_ptr)->loc = 40;
+	memcpy((*fi_ptr)->da, &bytes[0], 6);
+	memcpy((*fi_ptr)->sa, &bytes[6], 6);
+	memcpy((*fi_ptr)->bssid, &bytes[12], 6);
+	deal_seq_ctl(fi_ptr, &bytes[18]);
 }
 
 void
-deal_manage_body(frame_info **fi_ptr, const u_char *bytes)
+deal_manage_body(struct frame_info **fi_ptr, const uint8_t *bytes)
 {
-	deal_fix_param(fi_ptr, bytes);
-	deal_ssid_param(fi_ptr, bytes);
-	deal_support_rates(fi_ptr, bytes);
-	deal_ds_param(fi_ptr, bytes);
-}
-
-void
-deal_fix_param(frame_info **fi_ptr, const u_char *bytes)
-{
-	int loc = (*fi_ptr)->loc;
-	int i;
-	
-	memcpy((*fi_ptr)->mb->timestamp, &bytes[loc], 8);	
-	memcpy((*fi_ptr)->mb->interval, &bytes[loc+8], 2);
-
-	int temp = (int)bytes[loc+11]*256+(int)bytes[loc+10];
-
-	for(i = 0; i < 16; i++) {
-		(*fi_ptr)->mb->cap_info[i] = temp%2;
-		temp /= 2;
+	switch ((*fi_ptr)->subtype) {
+		case ATIM:
+			break;
+		case BEACON:
+			deal_fix_param(fi_ptr, bytes);
+			break;
+		case PROBE_REQUEST:
+			deal_ssid_param(fi_ptr, bytes);
+			break;
+		case PROBE_RESPONCE:
+			deal_fix_param(fi_ptr, bytes);
+			break;
+		case DEAUTHENTICATION:
+			//TODO
+			//deal_reason_code(fi_ptr, bytes);
+			break;
+		case DISASSOCIATION:
+			//TODO
+			//deal_reason_code(fi_ptr, bytes);
+			break;
+		case AUTHENTICATION:
+			//TODO
+			//deal_auth_algo_num(fi_ptr, bytes);
+			break;
+		default:
+			deal_cap_info(fi_ptr, bytes);
+			break;
 	}
+}
 
-	(*fi_ptr)->loc += 12;
+void
+deal_fix_param(struct frame_info **fi_ptr, const uint8_t *bytes)
+{
+	memcpy((*fi_ptr)->mb->timestamp, &bytes[0], 8);	
+	memcpy((*fi_ptr)->mb->interval, &bytes[8], 2);
+
+	deal_cap_info(fi_ptr, &bytes[10]);
+}
+
+void
+deal_cap_info(struct frame_info **fi_ptr, const uint8_t *bytes)
+{
+	memcpy((*fi_ptr)->mb->cap_info, bytes, 2);
+
+	switch ((*fi_ptr)->subtype) {
+		case BEACON:
+			deal_ssid_param(fi_ptr, &bytes[2]);
+			break;
+		case PROBE_RESPONCE:
+			deal_ssid_param(fi_ptr, &bytes[2]);
+			break;
+		case ASSOCIATION_REQUEST:
+			//TODO
+			//deal_listen_interval(fi_ptr, &bytes[2]);
+			break;
+		case REASSOCIATION_REQUEST:
+			//TODO
+			//deal_listen_interval(fi_ptr, &bytes[2]);
+			break;
+		default:
+			//TODO
+			//deal_status_code(fi_ptr, &bytes[2]);
+			break;
+	}
 }
 
 void 
-deal_ssid_param(frame_info **fi_ptr, const u_char *bytes)
+deal_ssid_param(struct frame_info **fi_ptr, const uint8_t *bytes)
 {	
-	int loc = (*fi_ptr)->loc;
-
-	(*fi_ptr)->mb->s_tag_num = (uint8_t)bytes[loc];
-	(*fi_ptr)->mb->s_tag_len = (uint8_t)bytes[loc+1];
+	(*fi_ptr)->mb->s_tag_num = bytes[0];
+	(*fi_ptr)->mb->s_tag_len = bytes[1];
 	(*fi_ptr)->mb->ssid = (char *)malloc((*fi_ptr)->mb->s_tag_len);
-	memcpy((*fi_ptr)->mb->ssid, &bytes[loc+2], 
+	memcpy((*fi_ptr)->mb->ssid, &bytes[2], 
 				(*fi_ptr)->mb->s_tag_len);
 
-	(*fi_ptr)->loc += (*fi_ptr)->mb->s_tag_len+2;
+	deal_support_rates(fi_ptr, &bytes[2+(*fi_ptr)->mb->s_tag_len]);
 }
 
 void 
-deal_support_rates(frame_info **fi_ptr, const u_char *bytes)
+deal_support_rates(struct frame_info **fi_ptr, const uint8_t *bytes)
 {
-	int loc = (*fi_ptr)->loc;	
-
-	(*fi_ptr)->mb->sr_tag_num = (uint8_t)bytes[loc];
-	(*fi_ptr)->mb->sr_tag_len = (uint8_t)bytes[loc+1];
+	(*fi_ptr)->mb->sr_tag_num = bytes[0];
+	(*fi_ptr)->mb->sr_tag_len = bytes[1];
 	(*fi_ptr)->mb->support_rates = (uint8_t *)
 				malloc((*fi_ptr)->mb->sr_tag_len);
-	memcpy((*fi_ptr)->mb->support_rates, &bytes[loc+2],
+	memcpy((*fi_ptr)->mb->support_rates, &bytes[2],
 				(*fi_ptr)->mb->sr_tag_len);
 
-	(*fi_ptr)->loc += (*fi_ptr)->mb->sr_tag_len+2;
+	deal_ds_param(fi_ptr, &bytes[2+(*fi_ptr)->mb->sr_tag_len]);
 }
 
 void
-deal_ds_param(frame_info **fi_ptr, const u_char *bytes)
+deal_ds_param(struct frame_info **fi_ptr, const uint8_t *bytes)
 {
-	int loc = (*fi_ptr)->loc;	
-	
-	(*fi_ptr)->mb->ds_tag_num = (uint8_t)bytes[loc];
-	(*fi_ptr)->mb->ds_tag_len = (uint8_t)bytes[loc+1];
-	(*fi_ptr)->mb->channel = (uint8_t)bytes[loc+3];
+	(*fi_ptr)->mb->ds_tag_num = bytes[0];
+	(*fi_ptr)->mb->ds_tag_len = bytes[1];
+	(*fi_ptr)->mb->channel = bytes[2];
 
-	(*fi_ptr)->loc += 4;
+	deal_tim(fi_ptr, &bytes[3]);
 }
 
 void
-deal_tim(frame_info **fi_ptr, const u_char *bytes)
+deal_tim(struct frame_info **fi_ptr, const uint8_t *bytes)
 {
-	int loc = (*fi_ptr)->loc;	
-	
+	(*fi_ptr)->mb->tim_tag_num = bytes[0];
+	(*fi_ptr)->mb->tim_tag_len = bytes[1];
+
+	(*fi_ptr)->mb->count = bytes[2];
+	(*fi_ptr)->mb->period = bytes[3];
+	(*fi_ptr)->mb->bmap_ctrl = bytes[4];
+	(*fi_ptr)->mb->vbmap = bytes[5]; 
+
+	deal_erp(fi_ptr, &bytes[6]);
+}
+
+void
+deal_erp(struct frame_info **fi_ptr, const uint8_t *bytes)
+{
+	(*fi_ptr)->mb->erp_num = bytes[0];
+	(*fi_ptr)->mb->erp_len = bytes[1];
+	(*fi_ptr)->mb->erp_info = bytes[2];
+
+	deal_ext_support_rates(fi_ptr, &bytes[3]);
+}
+
+void
+deal_ext_support_rates(struct frame_info **fi_ptr, const uint8_t *bytes)
+{
+	(*fi_ptr)->mb->esr_num = bytes[0];
+	(*fi_ptr)->mb->esr_len = bytes[1];
+	(*fi_ptr)->mb->esr = (uint8_t *)malloc((*fi_ptr)->mb->esr_len);
+	memcpy((*fi_ptr)->mb->esr, &bytes[2], (*fi_ptr)->mb->esr_len);
+
+	//deal_rsn
 }
