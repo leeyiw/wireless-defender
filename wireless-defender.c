@@ -45,8 +45,6 @@ main(int argc, char *argv[])
 	WD_capture_init(WD_analyse_test, 1, (u_char *)1);
 	// 启动抓包
 	WD_capture_start();
-
-	WD_capture_start();
 	// 关闭抓包模块
 	WD_capture_destory();
 	// 清理抓包模块
