@@ -25,6 +25,15 @@ WD_server_init()
 	struct ifreq ifr;
 	struct sockaddr_in *listen_addr;
 
+	// 创建server模块进程
+	server_pid = fork();
+	if(server_pid > 0) {
+		// 父进程返回
+		return;
+	} else if(server_pid == -1) {
+		// 异常情况
+		err_exit("create server process error");
+	}
 	// 创建监听描述符
 	listen_fd = socket(AF_INET, SOCK_STREAM, 0);
 	if(-1 == listen_fd) {
@@ -45,6 +54,12 @@ WD_server_init()
 		sizeof(struct sockaddr_in))) {
 		err_exit1("bind interface '%s' error", g_server_interface);
 	}
+
+	// 监听客户端连接请求
+	WD_server_main_loop();
+
+	// 退出
+	exit(EXIT_SUCCESS);
 }
 
 /**
