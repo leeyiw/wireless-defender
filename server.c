@@ -94,4 +94,8 @@ WD_server_handle_connection()
 	if(WDCP_AUTHENTICATE_SUCCESS != WD_wdcp_authenticate()) {
 		return;
 	}
+	// 进行数据通信
+	while(WDCP_PROCESS_SUCCESS != WD_wdcp_process()) {
+		;
+	}
 }

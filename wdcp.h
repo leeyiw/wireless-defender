@@ -1,6 +1,8 @@
 #ifndef _WDCP_H
 #define _WDCP_H
 
+#define WDCP_PACKET_LEN				4096
+
 /* 连接过程中的宏定义 */
 #define WDCP_CONNECTION_SUCCESS		1
 #define WDCP_CONNECTION_FAIL		0
@@ -25,7 +27,23 @@
 #define AUTH_RSP_PKT				0x02
 #define AUTH_FAIL_PKT				0x03
 
-#define WDCP_PACKET_LEN				4096
+#define AUTH_DEFAULT_USERNAME		"wdadmin"
+#define AUTH_DEFAULT_PASSWORD		"wdadmin"
+
+#define AUTH_CHECK_SUCCESS			1
+#define AUTH_CHECK_FAIL				0
+
+#define FAILED_AUTH_CHECK			0x00000002
+
+/* 通信过程中的宏定义 */
+#define WDCP_PROCESS_SUCCESS		1
+#define WDCP_PROCESS_FAIL			0
+
+#define DATA_REQ_PKT				0x01
+
+#define REQ_TYPE_BASIC_INFO			0x00
+#define REQ_TYPE_AP_LIST			0x01
+
 
 struct packet {
 	uint8_t *buf;
@@ -46,5 +64,12 @@ extern int WD_wdcp_build_connection();
  *         返回WDCP_AUTHENTICATE_FAIL为失败
  */
 extern int WD_wdcp_authenticate();
+
+/**
+ * 与客户端进行数据通信
+ * @return 返回WDCP_PROCESS_SUCCESS为成功
+ *         返回WDCP_PROCESS_FAIL为失败
+ */
+extern int WD_wdcp_process();
 
 #endif
