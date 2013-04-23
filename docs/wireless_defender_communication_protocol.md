@@ -18,6 +18,8 @@
  - [4.1 数据请求头部][数据请求头部]
  - [4.2 数据响应头部][数据响应头部]
  - [4.3 设备基本信息数据包][设备基本信息数据包]
+ - [4.4 AP列表数据包][AP列表数据包]
+     + [4.4.1][AP结构定义][AP结构定义]
 
 [协议简介]: #introduction  "协议简介"
 [通用规范]: #common-specification  "通用规范"
@@ -39,6 +41,8 @@
 [数据请求头部]: #data-request-packet-header  "数据请求头部"
 [数据响应头部]: #data-response-packet-header "数据响应头部"
 [设备基本信息数据包]: #basic-info-packet "设备基本信息数据包"
+[AP列表数据包]: #ap-list-packet "AP列表数据包"
+[AP结构定义]: #ap-structure-def "AP结构定义"
 
 
 <a name="introduction"></a>
@@ -247,7 +251,7 @@ request_type (1 byte): 一字节无符号整形。请求的数据类型，取值
 </table>
 
 <a name="data-response-packet-header"></a>
-### 4.2  数据响应头部
+### 4.2 数据响应头部
 数据响应头部是服务器在收到包含[数据请求头部][]的数据请求数据包后，发出的数据响应数据包的头部。头部内容如下：
 
 type (1 byte): 一字节无符号整形。数据响应数据包的类型，这个字段的值必须为0x02(DATA_RSP_PKT)。
@@ -259,3 +263,17 @@ request_type (1 byte): 一字节无符号整形。客户端请求的数据类型
 设备基本信息数据包是服务器在收到客户端的请求类型为REQ_TYPE_BASIC_INFO的数据请求数据包后，向客户端返回设备基本信息的数据包。数据包内容如下：
 
 run_time (8 bytes): 8字节无符号整形，从设备启动到当前时刻经过的秒数。
+
+<a name="ap-list-packet"></a>
+### 4.4 AP列表数据包
+AP列表数据包是服务器在收到客户端的请求类型为REQ_TYPE_AP_LIST的数据请求数据包后，向客户端返回设备监测到的当前区域内的AP的列表的数据包。数据包内容如下：
+
+n_ap (1 bytes): 1字节无符号整形，AP列表中AP结构的个数。
+
+ap_list (variable): 一个变长的AP结构体列表。AP结构体的个数在 *n_ap* 字段中给出。AP结构体的内容参见[AP结构定义][]。
+
+<a name="ap-structure-def"></a>
+#### 4.4.1 AP结构定义
+ssid_len (1 bytes): 1字节无符号整形，AP的SSID的字符串长度。
+
+ssid (variable): 变长的SSID字段，长度由ssid_len说明。无线网络的SSID。
