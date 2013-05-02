@@ -221,6 +221,14 @@ WD_wdcp_req_basic_info(struct packet *p)
 static int
 WD_wdcp_req_ap_list(struct packet *p)
 {
+	WD_wdcp_rst_pkt(p);
+
+	// 写入AP个数
+	WD_wdcp_packet_write_u8(p, 0);
+
+	// 发送数据包
+	WD_wdcp_send_pkt(p);
+
 	return WDCP_PROCESS_SUCCESS;
 }
 
