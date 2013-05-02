@@ -4,7 +4,9 @@
 #include <stdio.h>
 #include "analyse.h"
 
-extern void deal_data_mac(struct frame_info **fi_ptr, const uint8_t *bytes);
-extern void deal_data_body(struct frame_info **fi_ptr, const uint8_t *bytes);
+extern void deal_data_mac( struct frame_info **fi_ptr, 
+													const uint8_t *bytes );
+extern void deal_data_body( struct frame_info **fi_ptr, 
+													const uint8_t *bytes );
 
 #endif

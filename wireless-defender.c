@@ -39,7 +39,7 @@ main(int argc, char *argv[])
 	WD_init();
 
 	// 初始化服务器模块
-	WD_server_init();
+	//WD_server_init();
 
 	// 初始化抓包模块
 	WD_capture_init(WD_analyse_test, 1, (u_char *)1);

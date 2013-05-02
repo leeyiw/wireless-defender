@@ -5,6 +5,8 @@
 #include <inttypes.h>
 #include <string.h>
 #include <stdlib.h>
+/*for test*/
+#include <openssl/rc4.h>
 
 #include "config.h"
 #include "utils.h"
@@ -26,6 +28,11 @@
 #define AUTHENTICATION 11
 #define DEAUTHENTICATION 12
 
+#define PS_POLL 10
+#define RTS 11
+#define CTS 12
+#define ACK 13
+
 #define DATA 0
 #define DATA_CF_ACK 1
 #define DATA_CF_POLL 2
@@ -35,8 +42,10 @@
 #define QOSDATA 8
 #define QOSDATA_CF_ACK 9
 
-#define TODS 0x00000001
-#define FROMDS 0x00000010
+#define TODS 1
+#define FROMDS 2
+
+#define uchar unsigned char
 
 struct manage_body {
 	uint8_t timestamp[8];	
@@ -72,7 +81,7 @@ struct manage_body {
 };
 
 struct data_body {
-	uint8_t *data;
+	uchar *data;
 };
 
 //TODO :是否过界
@@ -96,18 +105,20 @@ struct frame_info {
 	struct data_body *db;
 };
 
-//typedef void (*PF)(frame_info **, const u_char *); 
+//typedef void ( *PF )( frame_info **, const u_char * ); 
 
-extern void WD_analyse_test(u_char *user, const struct pcap_pkthdr *h,
-					const u_char *bytes);
-extern struct frame_info *deal_frame_info(const uint8_t *bytes, int len);
-extern void deal_type(struct frame_info **fi_ptr, 
-       		const uint8_t *bytes);
-extern void deal_flag(struct frame_info **fi_ptr, const uint8_t *bytes);
-extern void deal_duration(struct frame_info **fi_ptr, const uint8_t *bytes);
-extern void deal_mac(struct frame_info **fi_ptr, const uint8_t *bytes);
-extern void deal_seq_ctl(struct frame_info **fi_ptr, const uint8_t *bytes); 
-extern void deal_frame_body(struct frame_info **fi_ptr, 
-						const uint8_t *bytes); 
+extern void WD_analyse_test( u_char *user, const struct pcap_pkthdr *h,
+					const u_char *bytes );
+extern struct frame_info *deal_frame_info( const uint8_t *bytes, int len );
+extern void deal_type( struct frame_info **fi_ptr, 
+       		const uint8_t *bytes );
+extern void deal_flag( struct frame_info **fi_ptr, const uint8_t *bytes );
+extern void deal_duration( struct frame_info **fi_ptr, 
+												const uint8_t *bytes );
+extern void deal_mac( struct frame_info **fi_ptr, const uint8_t *bytes );
+extern void deal_seq_ctl( struct frame_info **fi_ptr, 
+												const uint8_t *bytes ); 
+extern void deal_frame_body( struct frame_info **fi_ptr, 
+						const uint8_t *bytes ); 
 
 #endif

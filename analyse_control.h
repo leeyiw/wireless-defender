@@ -3,6 +3,7 @@
 
 #include "analyse.h"
 
-extern void deal_control_mac(struct frame_info **fi_ptr, const uint8_t *bytes);
+extern void deal_control_mac(struct frame_info **fi_ptr, 
+													const uint8_t *bytes);
 
 #endif
