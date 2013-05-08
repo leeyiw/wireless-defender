@@ -75,6 +75,17 @@ WD_analyse_test( u_char *user, const struct pcap_pkthdr *h,
 //	}
 }
 
+void WD_analyse(u_char *user, const struct pcap_pkthdr *h, const u_char *bytes)
+{
+	//struct frame_info *fi = NULL;
+
+	//fi = deal_frame_info((const uint8_t *)bytes, h->caplen);
+	//if(fi->type == MANAGE_TYPE && fi->subtype == BEACON) {
+	//	user_info("beacon frame detected!");
+	//}
+	//free(fi);
+}
+
 //帧处理的开始
 struct frame_info*
 deal_frame_info( const uint8_t *bytes, int len ) 

@@ -12,27 +12,42 @@
 #include "utils.h"
 #include "capture.h"
 
-#define MANAGE_TYPE 0 
-#define CONTROL_TYPE 4
-#define DATA_TYPE 8
+/**
+ * frame_info->type
+ */
+#define MANAGE_TYPE				0 
+#define CONTROL_TYPE			4
+#define DATA_TYPE				8
 
-#define ASSOCIATION_REQUEST 0
-#define ASSOCIATION_RESPONSE 1
-#define REASSOCIATION_REQUEST 2
-#define REASSOCIATION_RESPONSE 3
-#define PROBE_REQUEST 4
-#define PROBE_RESPONCE 5
-#define BEACON 8
-#define ATIM 9
-#define DISASSOCIATION 10
-#define AUTHENTICATION 11
-#define DEAUTHENTICATION 12
+/**
+ * frame_info->type == MANAGE_TYPE
+ * frame_info->subtype
+ */
+#define ASSOCIATION_REQUEST		0
+#define ASSOCIATION_RESPONSE	1
+#define REASSOCIATION_REQUEST	2
+#define REASSOCIATION_RESPONSE	3
+#define PROBE_REQUEST 			4
+#define PROBE_RESPONCE 			5
+#define BEACON 					8
+#define ATIM 					9
+#define DISASSOCIATION			10
+#define AUTHENTICATION			11
+#define DEAUTHENTICATION		12
 
+/**
+ * frame_info->type == CONTROL_TYPE
+ * frame_info->subtype
+ */
 #define PS_POLL 10
 #define RTS 11
 #define CTS 12
 #define ACK 13
 
+/**
+ * frame_info->type == DATA_TYPE
+ * frame_info->subtype
+ */
 #define DATA 0
 #define DATA_CF_ACK 1
 #define DATA_CF_POLL 2
@@ -109,6 +124,8 @@ struct frame_info {
 
 extern void WD_analyse_test( u_char *user, const struct pcap_pkthdr *h,
 					const u_char *bytes );
+extern void WD_analyse(u_char *user, const struct pcap_pkthdr *h,
+	const u_char *bytes);
 extern struct frame_info *deal_frame_info( const uint8_t *bytes, int len );
 extern void deal_type( struct frame_info **fi_ptr, 
        		const uint8_t *bytes );
