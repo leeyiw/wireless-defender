@@ -27,7 +27,7 @@ WD_analyse_test( u_char *user, const struct pcap_pkthdr *h,
 //		printf( "%x ", fi->db->data[i] );
 //	}
 //  printf( "%d ", fi->frame_len ) ;
-//  printf( "%x %x %x ", fi->type, fi->subtype, fi->flag ) ;
+ 	printf( "%x %x %x ", fi->type, fi->subtype, fi->flag ) ;
 //	printf( "%x %x", fi->duration[0], fi->duration[1] ) ;
 // 	for( i = 0; i < 6; i++ )  {
 // 		printf( "%x ", fi->bssid[i] ) ;	
@@ -107,8 +107,8 @@ deal_frame_info( const u_char *bytes, int len )
 
 	/* 捕获的包的长度减去18个字节的头部信息 */
 
-	fi->frame_len = len - 26;
-	deal_type( &fi, &bytes[26] ) ;
+	fi->frame_len = len - 18;
+	deal_type( &fi, &bytes[18] ) ;
 
 	return fi;
 }
@@ -125,7 +125,7 @@ deal_type( struct frame_info **fi_ptr, const u_char *bytes )
 			|| temp == DATA_TYPE )  {
 
 		( *fi_ptr ) ->type = temp;
-		( *fi_ptr ) ->subtype = ( temp / 16 ) % 16;
+		( *fi_ptr ) ->subtype = ( bytes[0] / 16 ) % 16;
 		deal_flag( fi_ptr, &bytes[1] ) ;
 		return;
 	}
