@@ -3,7 +3,8 @@
 
 #include "analyse.h"
 
+/* 具体control帧的内容 */
 extern void deal_control_mac(struct frame_info **fi_ptr, 
-													const uint8_t *bytes);
+													const u_char *bytes);
 
 #endif

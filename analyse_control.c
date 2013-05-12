@@ -1,9 +1,9 @@
 #include "analyse_control.h"
 
 void
-deal_control_mac( struct frame_info **fi_ptr, const uint8_t *bytes ) 
+deal_control_mac( struct frame_info **fi_ptr, const u_char *bytes ) 
 {
-	//根据控制帧的子类型进行不同的解析
+	/* 根据控制帧的子类型进行不同的解析 */
 	switch( ( *fi_ptr )->subtype ) {
 		case PS_POLL:
 			memcpy( ( *fi_ptr )->bssid, &bytes[22], 6 );

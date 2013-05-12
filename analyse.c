@@ -13,30 +13,19 @@ WD_analyse_test( u_char *user, const struct pcap_pkthdr *h,
 	user_info1( "capture packet len: %d, packet len: %d", 
 			h->caplen, h->len ) ;
 
-	struct frame_info *fi = deal_frame_info( ( uint8_t * ) bytes, 
+	struct frame_info *fi = deal_frame_info( ( u_char * ) bytes, 
 									( int ) h->caplen ) ;
-	
-	int i, j = 3;
-	RC4_KEY s;
-	uchar key[10];
-	uchar optarg[] = { 0x01, 0x02, 0x03, 0x04, 0x05,
-						0x06, 0x07, 0x08, 0x09, 0x00 };
-
-	memcpy( key, fi->db->data, 3 ) ;
-	for( i = 0; i < 10; i += 2 )  {
-		key[j++] = optarg[i]*16 + optarg[i+1];
-	}
-
-	RC4_set_key( &s, 8, key ) ;
-	RC4( &s, fi->frame_len - 3, &fi->db->data[3], &fi->db->data[3] ) ;
-
-	for( i = 3; i < fi->frame_len; i++ )  {
-		printf( "%c ", fi->db->data[i] ) ;
-	}
-	printf( "\n" ) ;
 
 /* for test */
 
+//	u_char optarg[] = { 0x01, 0x02, 0x03, 0x04, 0x05,
+//						0x06, 0x07, 0x08, 0x09, 0x00 };
+//	decrypt_wep( &fi, optarg );
+//
+//	int i;
+//	for( i = 4; i < fi->frame_len; i++ ) {
+//		printf( "%x ", fi->db->data[i] );
+//	}
 //  printf( "%d ", fi->frame_len ) ;
 //  printf( "%x %x %x ", fi->type, fi->subtype, fi->flag ) ;
 //	printf( "%x %x", fi->duration[0], fi->duration[1] ) ;
@@ -79,34 +68,60 @@ void WD_analyse(u_char *user, const struct pcap_pkthdr *h, const u_char *bytes)
 {
 	//struct frame_info *fi = NULL;
 
-	//fi = deal_frame_info((const uint8_t *)bytes, h->caplen);
+	//fi = deal_frame_info((const u_char *)bytes, h->caplen);
 	//if(fi->type == MANAGE_TYPE && fi->subtype == BEACON) {
 	//	user_info("beacon frame detected!");
 	//}
 	//free(fi);
 }
 
-//帧处理的开始
+/* 解密wep加密的内容，为无线流量分析 */
+
+void
+decrypt_wep( struct frame_info **fi_ptr, u_char *passwd ) {
+	int i, j = 3;
+	RC4_KEY s;
+	u_char key[10];
+	struct frame_info *fi = *fi_ptr;
+
+	/* iv和密码合成密钥 */
+
+	memcpy( key, fi->db->data, 3 ) ;
+	for( i = 0; i < 10; i += 2 )  {
+		key[j++] = passwd[i]*16 + passwd[i+1];
+	}
+
+	/* 使用openssl带的RC4算法 */
+
+	RC4_set_key( &s, 8, key ) ;
+	RC4( &s, fi->frame_len - 4, &fi->db->data[4], &fi->db->data[4] ) ;
+}
+
+/* 帧处理的开始 */
+
 struct frame_info*
-deal_frame_info( const uint8_t *bytes, int len ) 
+deal_frame_info( const u_char *bytes, int len ) 
 {
 	struct frame_info *fi = ( struct frame_info * ) 
 					malloc( sizeof( struct frame_info )  ) ;
 
-	//捕获的包的长度减去18个字节的头部信息
-	fi->frame_len = len - 18;
-	deal_type( &fi, &bytes[18] ) ;
+	/* 捕获的包的长度减去18个字节的头部信息 */
+
+	fi->frame_len = len - 26;
+	deal_type( &fi, &bytes[26] ) ;
 
 	return fi;
 }
 
-//解析帧中的类型和子类型信息
-void 
-deal_type( struct frame_info **fi_ptr, const uint8_t *bytes )  
-{
-	uint8_t temp = bytes[0];
+/* 解析帧中的类型和子类型信息 */
 
-	//如果不属于三种类型之一，则返回NULL
+void 
+deal_type( struct frame_info **fi_ptr, const u_char *bytes )  
+{
+	u_char temp = bytes[0];
+
+	/* 如果不属于三种类型之一，则返回NULL */ 
+
 	if( temp%16 == MANAGE_TYPE || temp%16 == CONTROL_TYPE 
 			|| temp%16 == DATA_TYPE )  {
 
@@ -119,27 +134,31 @@ deal_type( struct frame_info **fi_ptr, const uint8_t *bytes )
 	*fi_ptr = NULL;
 }
 
-//解析帧内一组标志位信息
+/* 解析帧内一组标志位信息 */
+
 void
-deal_flag( struct frame_info **fi_ptr, const uint8_t *bytes )  
+deal_flag( struct frame_info **fi_ptr, const u_char *bytes )  
 {
 	( *fi_ptr ) ->flag = bytes[0];
 	deal_duration( fi_ptr, &bytes[1] ) ;
 }
 
-//解析duration/id信息
+/* 解析duration/id信息 */
+
 void
-deal_duration( struct frame_info **fi_ptr, const uint8_t *bytes ) 
+deal_duration( struct frame_info **fi_ptr, const u_char *bytes ) 
 {
 	memcpy( ( *fi_ptr ) ->duration, bytes, 2 ) ;
 	deal_mac( fi_ptr, &bytes[2] ) ;
 }
 
-//解析mac信息
+/* 解析mac信息 */
+
 void
-deal_mac( struct frame_info **fi_ptr, const uint8_t *bytes ) 
+deal_mac( struct frame_info **fi_ptr, const u_char *bytes ) 
 {
-	//根据帧的类型不同
+	/* 根据帧的类型不同 */
+
 	switch( ( *fi_ptr ) ->type )  {
 		case MANAGE_TYPE:
 			deal_manage_mac( fi_ptr, bytes ) ;
@@ -156,11 +175,12 @@ deal_mac( struct frame_info **fi_ptr, const uint8_t *bytes )
 	}
 }
 
-//解析帧的顺序控制字段
+/* 解析帧的顺序控制字段 */
+
 void
-deal_seq_ctl( struct frame_info **fi_ptr, const uint8_t *bytes ) 
+deal_seq_ctl( struct frame_info **fi_ptr, const u_char *bytes ) 
 {
-	uint8_t temp = bytes[0];
+	u_char temp = bytes[0];
 
 	( *fi_ptr ) ->frame_num = temp%16;	
 	temp /= 16;	
@@ -169,18 +189,20 @@ deal_seq_ctl( struct frame_info **fi_ptr, const uint8_t *bytes )
 	deal_frame_body( fi_ptr, &bytes[2] ) ;	
 }
 
-//解析帧主体
+/* 解析帧主体 */
+
 void 
-deal_frame_body( struct frame_info **fi_ptr, const uint8_t *bytes ) 
+deal_frame_body( struct frame_info **fi_ptr, const u_char *bytes ) 
 {
-	//根据帧类型不同分别解析
+	/* 根据帧类型不同分别解析 */
+
 	switch( ( *fi_ptr ) ->type )  {
 		case MANAGE_TYPE:
 			( *fi_ptr ) ->mb = ( struct manage_body * ) 
 				malloc( sizeof( struct manage_body ) ) ;
 			deal_manage_body( fi_ptr, bytes ) ;
 			break;
-		//控制帧没有帧主体
+		/* 控制帧没有帧主体 */
 		case CONTROL_TYPE:
 			break;
 		case DATA_TYPE:
