@@ -118,16 +118,14 @@ deal_frame_info( const u_char *bytes, int len )
 void 
 deal_type( struct frame_info **fi_ptr, const u_char *bytes )  
 {
-	u_char temp = bytes[0];
+	u_char temp = bytes[0] % 16;
 
 	/* 如果不属于三种类型之一，则返回NULL */ 
+	if( temp == MANAGE_TYPE || temp == CONTROL_TYPE 
+			|| temp == DATA_TYPE )  {
 
-	if( temp%16 == MANAGE_TYPE || temp%16 == CONTROL_TYPE 
-			|| temp%16 == DATA_TYPE )  {
-
-		( *fi_ptr ) ->type = temp%16;
-		temp /= 16;
-		( *fi_ptr ) ->subtype = temp%16;
+		( *fi_ptr ) ->type = temp;
+		( *fi_ptr ) ->subtype = ( temp / 16 ) % 16;
 		deal_flag( fi_ptr, &bytes[1] ) ;
 		return;
 	}
