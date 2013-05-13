@@ -124,7 +124,8 @@ extern void WD_analyse_test( u_char *user, const struct pcap_pkthdr *h,
 					const u_char *bytes );
 extern void WD_analyse(u_char *user, const struct pcap_pkthdr *h,
 					const u_char *bytes);
-extern struct frame_info *deal_frame_info( const u_char *bytes, int len );
+extern void deal_frame_info( struct frame_info **fi_ptr, 
+					const u_char *bytes, int len );
 extern void deal_type( struct frame_info **fi_ptr, 
        				const u_char *bytes );
 extern void deal_flag( struct frame_info **fi_ptr, const u_char *bytes );
@@ -137,4 +138,5 @@ extern void deal_frame_body( struct frame_info **fi_ptr,
 					const u_char *bytes ); 
 
 extern void decrypt_wep( struct frame_info **fi_ptr, u_char *passwd );
+extern void destroy( struct frame_info *fi_old );
 #endif

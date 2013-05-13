@@ -13,9 +13,11 @@ WD_analyse_test( u_char *user, const struct pcap_pkthdr *h,
 	user_info1( "capture packet len: %d, packet len: %d", 
 			h->caplen, h->len ) ;
 
-	struct frame_info *fi = deal_frame_info( ( u_char * ) bytes, 
+	struct frame_info *fi = ( struct frame_info * ) 
+					malloc( sizeof( struct frame_info )  ) ;
+	struct frame_info *fi_old = fi;
+	deal_frame_info( &fi, ( u_char * ) bytes, 
 									( int ) h->caplen ) ;
-
 /* for test */
 
 //	u_char optarg[] = { 0x01, 0x02, 0x03, 0x04, 0x05,
@@ -26,7 +28,7 @@ WD_analyse_test( u_char *user, const struct pcap_pkthdr *h,
 //	for( i = 4; i < fi->frame_len; i++ ) {
 //		printf( "%x ", fi->db->data[i] );
 //	}
-//  printf( "%d ", fi->frame_len ) ;
+// 	printf( "%d ", fi->frame_len ) ;
  	printf( "%x %x %x ", fi->type, fi->subtype, fi->flag ) ;
 //	printf( "%x %x", fi->duration[0], fi->duration[1] ) ;
 // 	for( i = 0; i < 6; i++ )  {
@@ -62,6 +64,7 @@ WD_analyse_test( u_char *user, const struct pcap_pkthdr *h,
 // 	for( i = 0; i < fi->frame_len; i++ )  {
 // 		printf( "%x ", fi->db->data[i] ) ;	
 //	}
+	destroy( fi_old );
 }
 
 void WD_analyse(u_char *user, const struct pcap_pkthdr *h, const u_char *bytes)
@@ -99,18 +102,14 @@ decrypt_wep( struct frame_info **fi_ptr, u_char *passwd ) {
 
 /* 帧处理的开始 */
 
-struct frame_info*
-deal_frame_info( const u_char *bytes, int len ) 
+void 
+deal_frame_info( struct frame_info **fi_ptr, const u_char *bytes, int len ) 
 {
-	struct frame_info *fi = ( struct frame_info * ) 
-					malloc( sizeof( struct frame_info )  ) ;
+	/* 去除捕获的包的头部信息 */
 
-	/* 捕获的包的长度减去18个字节的头部信息 */
+	( *fi_ptr )->frame_len = len - ( int )bytes[2];
+	deal_type( fi_ptr, &bytes[bytes[2]] ) ;
 
-	fi->frame_len = len - 18;
-	deal_type( &fi, &bytes[18] ) ;
-
-	return fi;
 }
 
 /* 解析帧中的类型和子类型信息 */
@@ -212,4 +211,10 @@ deal_frame_body( struct frame_info **fi_ptr, const u_char *bytes )
 			*fi_ptr = NULL;
 			break;
 	}
+}
+
+void
+destroy( struct frame_info *fi_old )
+{
+		free( fi_old );	
 }
