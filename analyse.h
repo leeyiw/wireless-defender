@@ -6,6 +6,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <openssl/rc4.h>
+#include <pthread.h>
 
 #include "config.h"
 #include "utils.h"
@@ -38,105 +39,69 @@
  * frame_info->type == CONTROL_TYPE
  * frame_info->subtype
  */
-#define PS_POLL 10
-#define RTS 11
-#define CTS 12
-#define ACK 13
+#define PS_POLL		10
+#define RTS 		11
+#define CTS 		12
+#define ACK 		13
 
 /**
  * frame_info->type == DATA_TYPE
  * frame_info->subtype
  */
-#define DATA 0
-#define DATA_CF_ACK 1
-#define DATA_CF_POLL 2
-#define NULL_DATA 4
-#define CF_ACK 5
-#define CF_POLL 6
-#define QOSDATA 8
-#define QOSDATA_CF_ACK 9
+#define DATA 			0
+#define DATA_CF_ACK 	1
+#define DATA_CF_POLL 	2
+#define NULL_DATA 		4
+#define CF_ACK			5
+#define CF_POLL 		6
+#define QOSDATA 		8
+#define QOSDATA_CF_ACK 	9
 
-#define TODS 1
-#define FROMDS 2
+#define TODS 	1
+#define FROMDS 	2
 
-#define u_char unsigned char
+#define NO_ENCRYPT		0
+#define WEP_ENCRYPT		1 
+#define WPA_ENCRYPT		2
 
-/* 具体每个代表什么去抓包吧咩哈哈哈哈 */
-struct manage_body {
-	u_char timestamp[8];	
-	u_char interval[2]; 
-	u_char cap_info[2];
+#define SNAP_DSAP 				0xaa
+#define SNAP_SSAP				0xaa
+#define SNAP_CONTROL			0x03
+#define ETHERNET_TYPE_ONE		0x88
+#define ETHERNET_TYPE_SECOND	0x8e
 
-	u_char s_tag_num;
-	u_char s_tag_len;
-	char *ssid;
+#define WPA_FLAG		0x20
 
-	u_char sr_tag_num;
-	u_char sr_tag_len;
-	u_char *support_rates; 
+typedef unsigned char u_char;
 
-	u_char ds_tag_num;
-	u_char ds_tag_len;
-	u_char channel;
-	
-	u_char tim_tag_num;
-	u_char tim_tag_len;
-	u_char count;
-	u_char period;
-	u_char bmap_ctrl;
-	u_char vbmap;
-	
-	u_char erp_num;
-	u_char erp_len;
-	u_char erp_info;
-
-	u_char esr_num;
-	u_char esr_len;
-	u_char *esr;
-};
-
-struct data_body {
-	u_char *data;
-};
-
-//TODO :是否过界
-struct frame_info {
-	int frame_len;
-
-	u_char type;
-	u_char subtype;
-	u_char flag;
-	u_char duration[2];
+typedef struct _AP_info {
+	char *ssid;		
+	u_char timestamp[8];
 	u_char bssid[6];
 	u_char sa[6];
-	u_char da[6];
-	u_char ra[6];
-	u_char ta[6];
-	u_char loc;
-	u_char frame_num;
-	int seq_num;
-	//TODO:考虑要不要分开
-	struct manage_body *mb;
-	struct data_body *db;
-};
+	int encrypt;
+	int is_eapol;
+	//WPA_info *wpa;
+	struct _AP_info *next;
+} AP_info;
 
-extern void WD_analyse_test( u_char *user, const struct pcap_pkthdr *h,
-					const u_char *bytes );
-extern void WD_analyse(u_char *user, const struct pcap_pkthdr *h,
-					const u_char *bytes);
-extern void deal_frame_info( struct frame_info **fi_ptr, 
-					const u_char *bytes, int len );
-extern void deal_type( struct frame_info **fi_ptr, 
-       				const u_char *bytes );
-extern void deal_flag( struct frame_info **fi_ptr, const u_char *bytes );
-extern void deal_duration( struct frame_info **fi_ptr, 
-					const u_char *bytes );
-extern void deal_mac( struct frame_info **fi_ptr, const u_char *bytes );
-extern void deal_seq_ctl( struct frame_info **fi_ptr, 
-					const u_char *bytes ); 
-extern void deal_frame_body( struct frame_info **fi_ptr, 
-					const u_char *bytes ); 
+typedef struct frame {
+	u_char *bytes;
+	int len;
+} frame_t;
 
-extern void decrypt_wep( struct frame_info **fi_ptr, u_char *passwd );
-extern void destroy( struct frame_info *fi_old );
+extern char ssid[105];
+extern AP_info *ap_head;
+extern AP_info *ap_tail;
+extern AP_info *ap_cur;
+
+extern void WD_analyse_test(u_char *user, const struct pcap_pkthdr *h,
+				const u_char *bytes);
+extern int is_exists(u_char *bssid);
+extern void deal_frame_info(const u_char *bytes, int packet_len);
+extern void deal_type(const u_char *bytes, int packet_len);
+extern void deal_beacon_mac(const u_char *bytes, int packet_len);
+extern void deal_timestamp(const u_char *bytes, int packet_len); 
+extern void deal_ssid(const u_char *bytes, int packet_len); 
+
 #endif
