@@ -1,0 +1,38 @@
+[解析帧信息]
+
+Beacon帧： 	分析AP的信息，维护AP列表
+		
+			frame->bytes = NULL;
+
+data帧： 1. eapol: 	根据bssid判断，是否是需要的AP的握手包，如果不是，忽略，
+				 	如果是但AP列表中还没有此AP信息，则缓存。
+					如果是且已经有此AP信息，则提取其中WPA信息。
+
+					frame->bytes = NULL;
+
+		 2. data:  	根据bssid判断，是否是需要的数据包，如果不是，忽略
+		 			如果是但AP列表中还没有此AP信息，则丢弃。
+					如果是且AP列表有此AP信息：
+						已提取过eapol信息：	frame-bytes不置为NULL;
+						还没提取过eapol信息：查看缓存中是否有eapol，如果有，提取信息，frame-bytes不置为NULL;
+											 如果没有，舍弃。
+
+					除上述不置为NULL的情况，全部frame->bytes = NULL;
+
+
+[解密用户的数据帧并分析流量]
+
+frame->bytes == NULL:
+
+不进行任何处理，恢复状态，等待下次数据。
+
+frame->bytes != NULL:
+	根本bssid, 判断加密方式，进行解密，进一步分析流量
+
+
+
+实现：
+
+逻辑上两步属于流水线，采用多线程流水线模型。
+两个线程都要访问AP列表，采取读写锁的形式，因为线程2只需要读。
+
