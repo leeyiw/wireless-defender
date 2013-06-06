@@ -40,7 +40,7 @@
  * frame_info->subtype
  */
 #define PS_POLL		10
-#define RTS 		11
+#define RTS 		1
 #define CTS 		12
 #define ACK 		13
 
@@ -72,6 +72,8 @@
 
 #define WPA_FLAG		0x20
 
+#define CACHE_SIZE		100		/* 待测试 */
+
 typedef unsigned char u_char;
 
 typedef struct _AP_info {
@@ -85,23 +87,41 @@ typedef struct _AP_info {
 	struct _AP_info *next;
 } AP_info;
 
+typedef struct AP_list {
+	AP_info *head;	
+	AP_info *tail;
+	AP_info *cur;
+	pthread_mutex_t lock;
+} AP_list_t;
+
 typedef struct frame {
 	u_char *bytes;
 	int len;
 } frame_t;
 
-extern char ssid[105];
-extern AP_info *ap_head;
-extern AP_info *ap_tail;
-extern AP_info *ap_cur;
+typedef struct queue {
+	frame_t *array[CACHE_SIZE];
+	int head;
+	int tail;
+} queue_t;
+
+extern queue_t *q;
+extern AP_list_t *AP_list; 
+extern u_char ssid[105];
+
+extern u_char *eapol[CACHE_SIZE];
+extern int eapol_cur;
 
 extern void WD_analyse_test(u_char *user, const struct pcap_pkthdr *h,
-				const u_char *bytes);
-extern int is_exists(u_char *bssid);
-extern void deal_frame_info(const u_char *bytes, int packet_len);
-extern void deal_type(const u_char *bytes, int packet_len);
-extern void deal_beacon_mac(const u_char *bytes, int packet_len);
-extern void deal_timestamp(const u_char *bytes, int packet_len); 
-extern void deal_ssid(const u_char *bytes, int packet_len); 
+			   	const u_char *bytes);
+extern int is_exist(u_char *bssid);
+extern int is_eapol( const u_char *bytes );
+extern void eapol_cache( const u_char *bytes );
+extern void *deal_frame_info( void *arg );
+extern int deal_type(const u_char *bytes, int *packet_len);
+extern int deal_beacon_mac(const u_char *bytes, int *packet_len);
+extern int deal_data(const u_char *bytes, int *packet_len);
+extern void deal_timestamp(const u_char *bytes, int *packet_len); 
+extern void deal_ssid(const u_char *bytes, int *packet_len); 
 
 #endif

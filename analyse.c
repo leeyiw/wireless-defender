@@ -1,9 +1,8 @@
 #include "analyse.h"
 #include "preprocess.h"
 
-AP_info *ap_head = NULL;
-AP_info *ap_cur = NULL;
-AP_info *ap_tail = NULL;
+u_char *eapol[CACHE_SIZE];
+int eapol_cur = 0;
 
 void 
 WD_analyse_test( u_char *user, const struct pcap_pkthdr *h,
@@ -16,18 +15,18 @@ WD_analyse_test( u_char *user, const struct pcap_pkthdr *h,
 	}
 	user_info1( "capture packet len: %d, packet len: %d", 
 			h->caplen, h->len ) ;
-	frame->bytes = bytes;
+	frame->bytes = ( u_char * )bytes;
 	frame->len = h->caplen;
 	
-	if( ( ( queue->tail + 2 ) % CACHE_SIZE ) == front ) {
-		user_exit( "queue is full!" );	
+	if( ( ( q->tail + 2 ) % CACHE_SIZE ) == q->head ) {
+		user_exit( "q is full!" );	
 	}
-	tail = ( tail + 1 ) % CACHE_SIZE;
-	queue[tail] = frame;
+	q->tail = ( q->tail + 1 ) % CACHE_SIZE;
+	q->array[q->tail] = frame;
 
-	frame = queue[head];
-	head = ( head + 1 ) % CACHE_SIZE;
-	pipe_send( frame );
+	frame = q->array[q->head];
+	q->head = ( q->head + 1 ) % CACHE_SIZE;
+	pipe_send( &( prepline.head ), frame );
 }
 
 //void WD_analyse( u_char *user, const struct pcap_pkthdr *h, const u_char *bytes )
@@ -68,11 +67,11 @@ WD_analyse_test( u_char *user, const struct pcap_pkthdr *h,
 int
 is_exist( u_char *bssid ) 
 {
-	AP_info *temp = ap_head;	
+	AP_info *temp = AP_list->head;	
 
 	while( temp != NULL ) {
 		if( !memcmp( temp->bssid, bssid, 6 ) ) {
-			ap_cur = temp;
+			AP_list->cur = temp;
 			return 1;
 		}
 		temp = temp->next;
@@ -80,11 +79,29 @@ is_exist( u_char *bssid )
 	return 0;
 }
 
+int
+is_eapol( const u_char *bytes )
+{
+	if( SNAP_DSAP == bytes[24] && SNAP_SSAP == bytes[25] 
+					&& SNAP_CONTROL == bytes[26] 
+					&& ETHERNET_TYPE_ONE == bytes[30] 
+					&& ETHERNET_TYPE_ONE == bytes[31] ) {
+		return 1;	
+	}
+	return 0;
+}
+
+void
+eapol_cache( const u_char *bytes )
+{
+	eapol[eapol_cur++] = ( u_char * )bytes;
+}
+
 void *
 deal_frame_info( void *arg ) 
 {
-	int status;
-	stage_t *stage = ( stage * )arg;
+	int status, return_val;
+	stage_t *stage = ( stage_t * )arg;
 	frame_t *frame = stage->frame;
 
 	while(1) {
@@ -102,15 +119,38 @@ deal_frame_info( void *arg )
 		}
 			
 		/* 去除捕获的包的头部信息 */
-		frame->len -= ( int )bytes[2];
-		status = deal_type( &( frame->bytes[bytes[2]] ), frame->len );
-		stage->is_ready = 0;
-		gtstage->is_finished = 1;
-
-		if( !status ) {
-			pipe_send( stage->next, );		
+		frame->len -= ( int )frame->bytes[2];
+		
+		status = pthread_mutex_lock( &AP_list->lock );
+		if( status ) {
+			user_exit( "Cannot lock mutex!" );		
+		}
+		return_val = deal_type( &( frame->bytes[frame->bytes[2]] ), 
+												&( frame->len ) );
+		status = pthread_mutex_lock( &AP_list->lock );
+		if( status ) {
+			user_exit( "Cannot lock mutex!" );		
 		}
 
+		if( 0 == return_val ) {
+			free( frame );
+			frame = NULL;
+		}
+		stage->is_ready = 0;
+		stage->is_finished = 1;
+
+		if( status > 0 ) {
+			pipe_send( &( stage->next ), frame );
+		}
+
+		status = pthread_cond_signal( &stage->cond_is_finished );
+		if( status ) {
+			user_exit( "Cannot send signal to pthread!" );
+		}
+		status = pthread_mutex_unlock( &stage->mutex );
+		if( status ) {
+			user_exit( "Cannot unlock mutex!" );	
+		}
 	}
 
 	return NULL;
@@ -119,50 +159,75 @@ deal_frame_info( void *arg )
 /* 解析帧中的类型和子类型信息 */
 
 int
-deal_type( const u_char *bytes, int frame_len )  
+deal_type( const u_char *bytes, int *frame_len )  
 {
 	int type = bytes[0] % 16;
 	int subtype = ( bytes[0] / 16 ) % 16;
 
 	if( type == MANAGE_TYPE && subtype == BEACON ) {
-		frame_len -= 10;
-		deal_beacon_mac( &bytes[10], frame_len );
-	} //else if( type == DATA_TYPE && subtype == DATA ) {
-		//TODO
-	//}
-	
+		*frame_len -= 10;
+		return deal_beacon_mac( &bytes[10], frame_len );
+	} else if( type == DATA_TYPE && subtype == DATA ) {
+		return deal_data( bytes, frame_len );
+	}
+	return -1;	
 }
 
 /* 不加密的SNAP开头为AA AA 03 00 00 00.... */
 
-//void
-//deal_data( const u_char *bytes, int frame_len )
-//{
-//	AP_info *ap_cur = ap_head;
-//	u_char bssid[6];
-//
-//	switch( bytes[0] & 3 ) {
-//		case 0: 								/* IBSS */	
-//				memcpy( bssid, &bytes[15], 6 );
-//				break;	
-//		case 1: 								/* TODS */	
-//				memcpy( bssid, &bytes[3], 6 );
-//				break;						
-//		case 2: 								/* FROMDS */
-//				memcpy( bssid, &bytes[9], 6 ); 
-//				break;
-//		case 3: 								/* WDS */
-//				memcpy( 	bssid, &bytes[9], 6 );
-//				break;	
-//	}
-//	
-//	if( !is_exist( bssid ) ) {
-//		if(  )	
-//	}
-//}
+int
+deal_data( const u_char *bytes, int *frame_len )
+{
+	u_char bssid[6];
 
-void
-deal_beacon_mac( const u_char *bytes, int frame_len )
+	switch( bytes[0] & 3 ) {
+		case 0: 								/* IBSS */	
+				memcpy( bssid, &bytes[15], 6 );
+				break;	
+		case 1: 								/* TODS */	
+				memcpy( bssid, &bytes[3], 6 );
+				break;						
+		case 2: 								/* FROMDS */
+				memcpy( bssid, &bytes[9], 6 ); 
+				break;
+		case 3: 								/* WDS */
+				memcpy( bssid, &bytes[9], 6 );
+				break;	
+	}
+
+	if( memcmp( ssid, bssid, 6 ) ) {
+		return 0;
+	}
+	if( is_exist( bssid ) ) {
+		if( is_eapol( bytes ) ) {
+			AP_list->cur->is_eapol = 1;
+			/* TODO：分析握手包的内容 */
+			return 0;
+		} else {
+			AP_list->cur->encrypt = (bytes[27] == WPA_FLAG )?
+									WPA_ENCRYPT : WEP_ENCRYPT;
+			if( WEP_ENCRYPT == AP_list->cur->encrypt ) {
+				return 1;	
+			}
+			if( !AP_list->cur->is_eapol ) {
+				/* 可能在缓存的eapol包中
+				 * 需要分清况讨论 */
+				return 0;
+			} else {
+				/* 可以被解密 */
+				return 1;
+			}
+		}
+	} else {
+		if( is_eapol( bytes ) ) {
+			eapol_cache( bytes );	
+		} 
+		return 0;
+	}
+}
+
+int
+deal_beacon_mac( const u_char *bytes, int *frame_len )
 {
 	AP_info *temp;
 	u_char bssid[6];
@@ -174,34 +239,35 @@ deal_beacon_mac( const u_char *bytes, int frame_len )
 		memcpy( temp->sa, bytes, 6 );
 		memcpy( temp->bssid, &bytes[6], 6 );
 		temp->next = NULL;
-		frame_len -= 14;
+		*frame_len -= 14;
 
-		if( NULL == ap_head ) {
-			ap_head = temp;
-			ap_tail = temp;
-		} else {
-			ap_tail->next = temp;
-			ap_tail = ap_tail->next;
+		if( NULL == AP_list->head ) {
+			AP_list->head = temp;
+			AP_list->tail = temp;
+		} else	{
+			AP_list->tail->next = temp;
+			AP_list->tail = AP_list->tail ->next;
 		}
 
-		deal_timestamp( &bytes[14], frame_len );
+		deal_timestamp( &bytes[14],frame_len ); 
 	}
+	return 0;
 }
 
 void
-deal_timestamp( const u_char *bytes, int frame_len ) 
-{
-	memcpy( ap_tail->timestamp, bytes, 8 );		
-	frame_len -= 12;
+deal_timestamp( const u_char *bytes , int *frame_len ) 
+{ 
+	memcpy( AP_list->tail->timestamp, bytes, 8); 
+	*frame_len -= 12 ;
 
-	deal_ssid( &bytes[12], frame_len );
+	deal_ssid( &bytes[12],frame_len ); 
 }
 
 void
-deal_ssid( const u_char *bytes, int frame_len ) 
-{
-	ap_tail->ssid = ( char * )malloc( sizeof( bytes[1] + 1 ) );
+deal_ssid( const u_char *bytes , int *frame_len ) 
+{ 
+	AP_list->tail->ssid= ( char * ) malloc( sizeof( bytes[1] +1 ) ); 
 	
-	memcpy( ap_tail->ssid, &bytes[2], bytes[1] );
-	ap_tail->ssid[bytes[1]] = '\0';
+	memcpy( AP_list->tail->ssid, &bytes[2],bytes [1] );
+	AP_list->tail->ssid[bytes[1]]= '\0';
 }
