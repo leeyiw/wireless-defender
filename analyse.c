@@ -15,17 +15,18 @@ WD_analyse_test( u_char *user, const struct pcap_pkthdr *h,
 	}
 	user_info1( "capture packet len: %d, packet len: %d", 
 			h->caplen, h->len ) ;
-	frame->bytes = ( u_char * )bytes;
+	frame->bytes = ( u_char * )malloc( h->caplen );
+	memcpy( frame->bytes, bytes, h->caplen );
 	frame->len = h->caplen;
 	
 	if( ( ( q->tail + 2 ) % CACHE_SIZE ) == q->head ) {
-		user_exit( "q is full!" );	
-	}
-	q->tail = ( q->tail + 1 ) % CACHE_SIZE;
-	q->array[q->tail] = frame;
-
-	frame = q->array[q->head];
-	q->head = ( q->head + 1 ) % CACHE_SIZE;
+ 		user_exit( "q is full!" );	
+ 	}
+ 	q->tail = ( q->tail + 1 ) % CACHE_SIZE;
+ 	q->array[q->tail] = frame;
+ 
+ 	frame = q->array[q->head];
+ 	q->head = ( q->head + 1 ) % CACHE_SIZE;
 	pipe_send( &( prepline.head ), frame );
 }
 
@@ -102,7 +103,6 @@ deal_frame_info( void *arg )
 {
 	int status, return_val;
 	stage_t *stage = ( stage_t * )arg;
-	frame_t *frame = stage->frame;
 
 	while(1) {
 		status = pthread_mutex_lock( &stage->mutex );	
@@ -119,6 +119,7 @@ deal_frame_info( void *arg )
 		}
 			
 		/* 去除捕获的包的头部信息 */
+		frame_t *frame = stage->frame;
 		frame->len -= ( int )frame->bytes[2];
 		
 		status = pthread_mutex_lock( &AP_list->lock );
@@ -127,15 +128,15 @@ deal_frame_info( void *arg )
 		}
 		return_val = deal_type( &( frame->bytes[frame->bytes[2]] ), 
 												&( frame->len ) );
-		status = pthread_mutex_lock( &AP_list->lock );
+		status = pthread_mutex_unlock( &AP_list->lock );
 		if( status ) {
 			user_exit( "Cannot lock mutex!" );		
 		}
 
-		if( 0 == return_val ) {
-			free( frame );
-			frame = NULL;
-		}
+	//	if( 0 == return_val ) {
+	//		free( frame );
+	//		frame = NULL;
+	//	}
 		stage->is_ready = 0;
 		stage->is_finished = 1;
 
@@ -266,7 +267,7 @@ deal_timestamp( const u_char *bytes , int *frame_len )
 void
 deal_ssid( const u_char *bytes , int *frame_len ) 
 { 
-	AP_list->tail->ssid= ( char * ) malloc( sizeof( bytes[1] +1 ) ); 
+	AP_list->tail->ssid= ( char * )malloc( bytes[1] + 1 ); 
 	
 	memcpy( AP_list->tail->ssid, &bytes[2],bytes [1] );
 	AP_list->tail->ssid[bytes[1]]= '\0';

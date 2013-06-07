@@ -13,7 +13,7 @@
 time_t WD_start_time;
 AP_list_t *AP_list = NULL;
 queue_t *q = NULL;
-u_char ssid[105] = { 0x5c, 0x63, 0xbf, 0x37, 0x34, 0xea };
+u_char ssid[105] = { 0x74, 0xea, 0x3a, 0x25, 0xa7, 0xfc };
 
 /**
  * 主程序全局初始化函数
@@ -62,7 +62,7 @@ main(int argc, char *argv[])
 	//WD_server_init();
 
 	// 初始化抓包模块
-	WD_capture_init(WD_analyse_test, 1, (u_char *)1);
+	WD_capture_init(WD_analyse_test, 20, (u_char *)1);
 	//启动预处理模块
 	WD_pipe_create(&prepline);	
 	// 启动抓包

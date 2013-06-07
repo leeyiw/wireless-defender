@@ -17,7 +17,6 @@ typedef struct stage {
 	int is_ready;
 	int is_finished;
 	PF func;
-	AP_info *head;
 	struct stage *next;
 } stage_t;
 

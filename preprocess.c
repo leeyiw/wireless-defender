@@ -38,6 +38,7 @@ WD_pipe_create( pipe_t *prepline )
 
 		new_stage->is_ready = 0;
 		new_stage->is_finished = 1;
+		new_stage->frame = ( frame_t *)malloc( sizeof( frame_t ) );
 		
 		status = pthread_create( &new_stage->tid, NULL, 
 										new_stage->func, new_stage );
@@ -75,7 +76,7 @@ pipe_send( stage_t **stage, frame_t *frame )
 
 	( *stage )->is_ready = 1;
 	( *stage )->is_finished = 0;
-	( *stage )->frame = frame;
+	memcpy( ( *stage )->frame, frame, sizeof( frame ) );
 
 	status = pthread_cond_signal( &( *stage )->cond_is_ready );
 	if( status ) {
