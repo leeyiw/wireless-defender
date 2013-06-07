@@ -33,7 +33,7 @@ WD_init()
 void
 analyse_init()
 {
-	q = ( queue_t *)malloc( sizeof( q ) );	
+	q = ( queue_t *)malloc( sizeof( queue_t ) );	
 	q->head = 1;
 	q->tail = 0;
 
@@ -62,7 +62,7 @@ main(int argc, char *argv[])
 	//WD_server_init();
 
 	// 初始化抓包模块
-	WD_capture_init(WD_analyse_test, 0, (u_char *)1);
+	WD_capture_init(WD_analyse_test, 1, (u_char *)1);
 	//启动预处理模块
 	WD_pipe_create(&prepline);	
 	// 启动抓包
