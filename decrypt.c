@@ -28,6 +28,7 @@ pre_encrypt( void *arg )
 			is_exist( ssid );
 			printf( "ssid: %s encrypt is: %d", AP_list->cur->ssid, 
 							AP_list->cur->encrypt );
+			status = pthread_mutex_unlock( &AP_list->lock );
 		}
 
 		stage->is_ready = 0;

@@ -13,8 +13,8 @@ WD_analyse_test( u_char *user, const struct pcap_pkthdr *h,
 	if( user != ( u_char * ) 1 )  {
 		return;
 	}
-	user_info1( "capture packet len: %d, packet len: %d", 
-			h->caplen, h->len ) ;
+//	user_info1( "capture packet len: %d, packet len: %d", 
+//			h->caplen, h->len ) ;
 	frame->bytes = ( u_char * )malloc( h->caplen );
 	memcpy( frame->bytes, bytes, h->caplen );
 	frame->len = h->caplen;
@@ -133,16 +133,16 @@ deal_frame_info( void *arg )
 			user_exit( "Cannot lock mutex!" );		
 		}
 
-	//	if( 0 == return_val ) {
-	//		free( frame );
-	//		frame = NULL;
-	//	}
-		stage->is_ready = 0;
-		stage->is_finished = 1;
-
-		if( status > 0 ) {
+		if( 0 == return_val ) {
+			//free( frame );
+			frame = NULL;
+		}
+		if( return_val >= 0 ) {
 			pipe_send( &( stage->next ), frame );
 		}
+
+		stage->is_ready = 0;
+		stage->is_finished = 1;
 
 		status = pthread_cond_signal( &stage->cond_is_finished );
 		if( status ) {
