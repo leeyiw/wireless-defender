@@ -13,7 +13,7 @@
 time_t WD_start_time;
 AP_list_t *AP_list = NULL;
 queue_t *q = NULL;
-u_char ssid[105] = { 0x74, 0xea, 0x3a, 0x25, 0xa7, 0xfc };
+u_char ssid[105] = { 0x38, 0x83, 0x45, 0xc3, 0xf8, 0x98 };
 
 /**
  * 主程序全局初始化函数
@@ -45,6 +45,17 @@ analyse_init()
 	pthread_mutex_init( &AP_list->lock, NULL );
 }
 
+void
+show_ap_list()
+{
+	AP_info *cur = AP_list->head;
+
+	while( cur != NULL ) {
+		printf( "%s\n", cur->ssid );	
+		cur = cur->next;
+	}
+}
+
 /**
  * 主程序全局清理函数
  */
@@ -67,11 +78,13 @@ main(int argc, char *argv[])
 	WD_pipe_create(&prepline);	
 	// 启动抓包
 	WD_capture_start();
+	//
+	show_ap_list();	
 	// 关闭抓包模块
 	WD_capture_destory();
 	// 清理抓包模块
 	WD_destory();
-
+	
 	pthread_exit( NULL );
 	return EXIT_SUCCESS;
 }

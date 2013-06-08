@@ -181,18 +181,18 @@ deal_data( const u_char *bytes, int *frame_len )
 {
 	u_char bssid[6];
 
-	switch( bytes[0] & 3 ) {
+	switch( bytes[1] & 3 ) {
 		case 0: 								/* IBSS */	
-				memcpy( bssid, &bytes[15], 6 );
+				memcpy( bssid, &bytes[16], 6 );
 				break;	
 		case 1: 								/* TODS */	
-				memcpy( bssid, &bytes[3], 6 );
+				memcpy( bssid, &bytes[4], 6 );
 				break;						
 		case 2: 								/* FROMDS */
-				memcpy( bssid, &bytes[9], 6 ); 
+				memcpy( bssid, &bytes[10], 6 ); 
 				break;
 		case 3: 								/* WDS */
-				memcpy( bssid, &bytes[9], 6 );
+				memcpy( bssid, &bytes[10], 6 );
 				break;	
 	}
 

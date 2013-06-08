@@ -7,7 +7,6 @@ pre_encrypt( void *arg )
 {
 	int status;
 	stage_t *stage = ( stage_t * )arg;
-	frame_t *frame = stage->frame;
 
 	while(1) {
 		status = pthread_mutex_lock( &stage->mutex );	
@@ -23,10 +22,12 @@ pre_encrypt( void *arg )
 			}
 		}
 
-		if( frame->bytes != NULL ) {
+		frame_t *frame = stage->frame;
+
+		if( frame != NULL ) {
 			status = pthread_mutex_lock( &AP_list->lock );
 			is_exist( ssid );
-			printf( "ssid: %s encrypt is: %d", AP_list->cur->ssid, 
+			printf( "ssid: %s encrypt is: %d\n", AP_list->cur->ssid, 
 							AP_list->cur->encrypt );
 			status = pthread_mutex_unlock( &AP_list->lock );
 		}
