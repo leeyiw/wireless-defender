@@ -73,7 +73,7 @@ main(int argc, char *argv[])
 	//WD_server_init();
 
 	// 初始化抓包模块
-	WD_capture_init(WD_analyse_test, 30, (u_char *)1);
+	WD_capture_init(WD_analyse_test, 5, (u_char *)1);
 	//启动预处理模块
 	WD_pipe_create(&prepline);	
 	// 启动抓包

@@ -92,16 +92,17 @@ is_eapol( const u_char *bytes )
 	return 0;
 }
 
-void
+int
 eapol_cache( const u_char *bytes )
 {
 	eapol[eapol_cur++] = ( u_char * )bytes;
+	return 0;
 }
 
 void *
 deal_frame_info( void *arg ) 
 {
-	int status, return_val;
+	int status, return_val, head_len;
 	stage_t *stage = ( stage_t * )arg;
 
 	while(1) {
@@ -120,14 +121,16 @@ deal_frame_info( void *arg )
 			
 		/* 去除捕获的包的头部信息 */
 		frame_t *frame = stage->frame;
-		frame->len -= ( int )frame->bytes[2];
+		head_len = ( int )frame->bytes[2];
+		frame->len -= head_len;
+		memcpy( frame->bytes, &frame->bytes[head_len], frame->len );
 		
 		status = pthread_mutex_lock( &AP_list->lock );
 		if( status ) {
 			user_exit( "Cannot lock mutex!" );		
 		}
-		return_val = deal_type( &( frame->bytes[frame->bytes[2]] ), 
-												&( frame->len ) );
+		return_val = deal_type( &frame->bytes, &frame->len );
+		
 		status = pthread_mutex_unlock( &AP_list->lock );
 		if( status ) {
 			user_exit( "Cannot lock mutex!" );		
@@ -160,14 +163,15 @@ deal_frame_info( void *arg )
 /* 解析帧中的类型和子类型信息 */
 
 int
-deal_type( const u_char *bytes, int *frame_len )  
+deal_type( u_char **bytes, int *frame_len )  
 {
-	int type = bytes[0] % 16;
-	int subtype = ( bytes[0] / 16 ) % 16;
+	u_char *bytes_bak = *bytes;
+	int type = bytes_bak[0] % 16;
+	int subtype = ( bytes_bak[0] / 16 ) % 16;
 
 	if( type == MANAGE_TYPE && subtype == BEACON ) {
 		*frame_len -= 10;
-		return deal_beacon_mac( &bytes[10], frame_len );
+		return deal_beacon_mac( &bytes_bak[10], frame_len );
 	} else if( type == DATA_TYPE && subtype == DATA ) {
 		return deal_data( bytes, frame_len );
 	}
@@ -177,53 +181,77 @@ deal_type( const u_char *bytes, int *frame_len )
 /* 不加密的SNAP开头为AA AA 03 00 00 00.... */
 
 int
-deal_data( const u_char *bytes, int *frame_len )
+deal_data( u_char **bytes, int *frame_len )
 {
 	u_char bssid[6];
+	u_char *bytes_bak = *bytes;
+	int ret_eapol, ret_exist;
 
-	switch( bytes[1] & 3 ) {
+	switch( bytes_bak[1] & 3 ) {
 		case 0: 								/* IBSS */	
-				memcpy( bssid, &bytes[16], 6 );
+				memcpy( bssid, &bytes_bak[16], 6 );
 				break;	
 		case 1: 								/* TODS */	
-				memcpy( bssid, &bytes[4], 6 );
+				memcpy( bssid, &bytes_bak[4], 6 );
 				break;						
 		case 2: 								/* FROMDS */
-				memcpy( bssid, &bytes[10], 6 ); 
+				memcpy( bssid, &bytes_bak[10], 6 ); 
 				break;
 		case 3: 								/* WDS */
-				memcpy( bssid, &bytes[10], 6 );
+				memcpy( bssid, &bytes_bak[10], 6 );
 				break;	
+	}
+	
+	if( 3 == ( bytes_bak[1] & 3 ) ) {
+		*frame_len -= 30;
+		memcpy( bytes_bak, &bytes_bak[30], *frame_len );
+	} else {
+		*frame_len -= 24;	
+		memcpy( bytes_bak, &bytes_bak[24], *frame_len );
 	}
 
 	if( memcmp( ssid, bssid, 6 ) ) {
 		return 0;
 	}
-	if( is_exist( bssid ) ) {
-		if( is_eapol( bytes ) ) {
-			AP_list->cur->is_eapol = 1;
-			/* TODO：分析握手包的内容 */
-			return 0;
-		} else {
-			AP_list->cur->encrypt = (bytes[27] == WPA_FLAG )?
-									WPA_ENCRYPT : WEP_ENCRYPT;
-			if( WEP_ENCRYPT == AP_list->cur->encrypt ) {
-				return 1;	
-			}
-			if( !AP_list->cur->is_eapol ) {
-				/* 可能在缓存的eapol包中
-				 * 需要分清况讨论 */
-				return 0;
-			} else {
-				/* 可以被解密 */
-				return 1;
-			}
-		}
-	} else {
-		if( is_eapol( bytes ) ) {
-			eapol_cache( bytes );	
-		} 
+	
+	ret_eapol = is_eapol( bytes_bak );
+	ret_exist = is_exist( bssid );
+	if( ret_exist && ret_eapol ) {
+		return deal_eapol( bytes_bak ); 
+	} else if( ret_exist && !ret_eapol ) {
+		return deal_data_noeapol( bytes_bak );	
+	} else if( !ret_exist && ret_eapol ) {
+		return eapol_cache( bytes_bak ); 
+	}
+	
+	return 0;
+}
+
+int
+deal_eapol( const u_char *bytes )
+{
+	AP_list->cur->is_eapol = 1;
+	// TODO：分析握手包的内容
+	return 0;
+}
+
+int
+deal_data_noeapol( const u_char *bytes )
+{
+	AP_list->cur->encrypt = (bytes[27] == WPA_FLAG )?
+							WPA_ENCRYPT : WEP_ENCRYPT;
+
+	if( WEP_ENCRYPT == AP_list->cur->encrypt ) {
+		return 1;	
+	}
+
+	if( !AP_list->cur->is_eapol ) {
+		/* 可能在缓存的eapol包中
+		 * 需要分清况讨论 */
 		return 0;
+	} else {
+		/* 可以被解密 */
+		return 1;
 	}
 }
 

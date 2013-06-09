@@ -26,9 +26,11 @@ pre_encrypt( void *arg )
 
 		if( frame != NULL ) {
 			status = pthread_mutex_lock( &AP_list->lock );
+
 			is_exist( ssid );
-			printf( "ssid: %s encrypt is: %d\n", AP_list->cur->ssid, 
-							AP_list->cur->encrypt );
+			if( WEP_ENCRYPT == AP_list->cur->encrypt ) {
+				printf( "haha\n" );
+			}
 			status = pthread_mutex_unlock( &AP_list->lock );
 		}
 

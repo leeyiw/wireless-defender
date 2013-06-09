@@ -116,12 +116,14 @@ extern void WD_analyse_test(u_char *user, const struct pcap_pkthdr *h,
 			   	const u_char *bytes);
 extern int is_exist(u_char *bssid);
 extern int is_eapol( const u_char *bytes );
-extern void eapol_cache( const u_char *bytes );
+extern int eapol_cache( const u_char *bytes );
 extern void *deal_frame_info( void *arg );
-extern int deal_type(const u_char *bytes, int *packet_len);
-extern int deal_beacon_mac(const u_char *bytes, int *packet_len);
-extern int deal_data(const u_char *bytes, int *packet_len);
-extern void deal_timestamp(const u_char *bytes, int *packet_len); 
-extern void deal_ssid(const u_char *bytes, int *packet_len); 
+extern int deal_type( u_char **bytes, int *packet_len );
+extern int deal_beacon_mac( const u_char *bytes, int *packet_len );
+extern int deal_data( u_char **bytes, int *packet_len );
+extern int deal_eapol( const u_char *bytes );
+extern int deal_data_noeapol( const u_char *bytes );
+extern void deal_timestamp( const u_char *bytes, int *packet_len ); 
+extern void deal_ssid( const u_char *bytes, int *packet_len );
 
 #endif
