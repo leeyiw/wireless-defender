@@ -8,12 +8,14 @@
 #include "utils.h"
 #include "analyse.h"
 #include "preprocess.h"
+#include "decrypt.h"
 
 /* 起始运行时间 */
 time_t WD_start_time;
 AP_list_t *AP_list = NULL;
 queue_t *q = NULL;
 u_char ssid[105] = { 0x38, 0x83, 0x45, 0xc3, 0xf8, 0x98 };
+WEP_info_t *wep = NULL;
 
 /**
  * 主程序全局初始化函数
@@ -33,6 +35,10 @@ WD_init()
 void
 analyse_init()
 {
+	u_char passwd[30] = { 0x1, 0x2, 0x3, 0x4, 0x5, 
+							0x6, 0x7, 0x8, 0x9, 0x0 };
+	wep = ( WEP_info_t * )malloc( sizeof( WEP_info_t ) ); 
+
 	q = ( queue_t *)malloc( sizeof( queue_t ) );	
 	q->head = 1;
 	q->tail = 0;
@@ -43,6 +49,9 @@ analyse_init()
 	AP_list->cur = NULL;
 
 	pthread_mutex_init( &AP_list->lock, NULL );
+	
+	memcpy( wep->passwd, passwd, 10 );
+	wep->passwd_len = 10;
 }
 
 void
@@ -73,7 +82,7 @@ main(int argc, char *argv[])
 	//WD_server_init();
 
 	// 初始化抓包模块
-	WD_capture_init(WD_analyse_test, 5, (u_char *)1);
+	WD_capture_init(WD_analyse_test, 10, (u_char *)1);
 	//启动预处理模块
 	WD_pipe_create(&prepline);	
 	// 启动抓包
