@@ -12,10 +12,12 @@
 
 /* 起始运行时间 */
 time_t WD_start_time;
+
 AP_list_t *AP_list = NULL;
 queue_t *q = NULL;
 u_char ssid[105] = { 0x38, 0x83, 0x45, 0xc3, 0xf8, 0x98 };
-WEP_info_t *wep = NULL;
+user_info_t *user = NULL;
+WPA_info_t *wpa = NULL;
 
 /**
  * 主程序全局初始化函数
@@ -37,7 +39,10 @@ analyse_init()
 {
 	u_char passwd[30] = { 0x1, 0x2, 0x3, 0x4, 0x5, 
 							0x6, 0x7, 0x8, 0x9, 0x0 };
-	wep = ( WEP_info_t * )malloc( sizeof( WEP_info_t ) ); 
+
+	user = ( user_info_t * )malloc( sizeof( user_info_t ) ); 
+
+	wpa = ( WPA_info_t * )malloc( sizeof( WPA_info_t ) );	
 
 	q = ( queue_t *)malloc( sizeof( queue_t ) );	
 	q->head = 1;
@@ -50,8 +55,8 @@ analyse_init()
 
 	pthread_mutex_init( &AP_list->lock, NULL );
 	
-	memcpy( wep->passwd, passwd, 10 );
-	wep->passwd_len = 10;
+	memcpy( user->passwd, passwd, 10 );
+	user->passwd_len = 10;
 }
 
 void

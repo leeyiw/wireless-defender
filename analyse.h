@@ -5,7 +5,6 @@
 #include <inttypes.h>
 #include <string.h>
 #include <stdlib.h>
-#include <openssl/rc4.h>
 #include <pthread.h>
 
 #include "config.h"
@@ -19,43 +18,8 @@
 #define CONTROL_TYPE			4
 #define DATA_TYPE				8
 
-/**
- * frame_info->type == MANAGE_TYPE
- * frame_info->subtype
- */
-#define ASSOCIATION_REQUEST		0
-#define ASSOCIATION_RESPONSE	1
-#define REASSOCIATION_REQUEST	2
-#define REASSOCIATION_RESPONSE	3
-#define PROBE_REQUEST 			4
-#define PROBE_RESPONCE 			5
-#define BEACON 					8
-#define ATIM 					9
-#define DISASSOCIATION			10
-#define AUTHENTICATION			11
-#define DEAUTHENTICATION		12
-
-/**
- * frame_info->type == CONTROL_TYPE
- * frame_info->subtype
- */
-#define PS_POLL		10
-#define RTS 		1
-#define CTS 		12
-#define ACK 		13
-
-/**
- * frame_info->type == DATA_TYPE
- * frame_info->subtype
- */
-#define DATA 			0
-#define DATA_CF_ACK 	1
-#define DATA_CF_POLL 	2
-#define NULL_DATA 		4
-#define CF_ACK			5
-#define CF_POLL 		6
-#define QOSDATA 		8
-#define QOSDATA_CF_ACK 	9
+#define DATA					0
+#define BEACON					8
 
 #define TODS 	1
 #define FROMDS 	2
@@ -72,6 +36,16 @@
 
 #define WPA_FLAG		0x20
 
+#define	TYPE_KEY				0x03 
+#define	EAPOL_WPA_KEY			0xfe
+#define	RSN						0x02 
+
+#define	PAIRWISE				0x08
+#define INSTALL					0x40	
+#define ACK						0x80
+#define MIC						0x01
+#define	KEY_VERSION				0x07 
+
 #define CACHE_SIZE		100		/* 待测试 */
 
 typedef unsigned char u_char;
@@ -83,7 +57,6 @@ typedef struct _AP_info {
 	u_char sa[6];
 	int encrypt;
 	int is_eapol;
-	//WPA_info *wpa;
 	struct _AP_info *next;
 } AP_info;
 
@@ -122,7 +95,7 @@ extern int deal_type( u_char **bytes, int *packet_len );
 extern int deal_beacon_mac( const u_char *bytes, int *packet_len );
 extern int deal_data( u_char **bytes, int *packet_len );
 extern int deal_eapol( const u_char *bytes );
-extern int deal_data_noeapol( const u_char *bytes );
+extern int deal_normal_data( const u_char *bytes );
 extern void deal_timestamp( const u_char *bytes, int *packet_len ); 
 extern void deal_ssid( const u_char *bytes, int *packet_len );
 

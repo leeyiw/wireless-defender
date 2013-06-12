@@ -1,8 +1,15 @@
 #include "analyse.h"
 #include "preprocess.h"
+#include "decrypt.h"
 
 u_char *eapol[CACHE_SIZE];
 int eapol_cur = 0;
+
+static u_char ZERO[32] = 
+"\x00\x00\x00\x00\x00\x00\x00\x00"
+"\x00\x00\x00\x00\x00\x00\x00\x00"
+"\x00\x00\x00\x00\x00\x00\x00\x00"
+"\x00\x00\x00\x00\x00\x00\x00\x00";
 
 void 
 WD_analyse_test( u_char *user, const struct pcap_pkthdr *h,
@@ -99,6 +106,71 @@ eapol_cache( const u_char *bytes )
 	return 0;
 }
 
+int
+deal_eapol( const u_char *bytes )
+{	
+	if( bytes[1] != TYPE_KEY && 
+		bytes[4] != EAPOL_WPA_KEY && 
+		bytes[4] != RSN ) {
+
+		return 0;
+	}
+
+	if( ( bytes[6] & PAIRWISE ) != 0 && 
+		( bytes[6] & INSTALL ) == 0 &&
+		( bytes[6] & ACK ) != 0 && 
+		( bytes[5] & MIC ) == 0 ) {
+
+		memcpy( wpa->anonce, &bytes[17], 32 );	
+	}
+
+	if( ( bytes[6] & PAIRWISE ) != 0 && 
+		( bytes[6] & INSTALL ) == 0 &&
+		( bytes[6] & ACK ) == 0 && 
+		( bytes[5] & MIC ) != 0 ) {
+		
+		if( !memcmp( &bytes[17], ZERO, 32 ) ) {
+			memcpy( wpa->snonce, &bytes[17], 32 );	
+		}
+        memcpy( wpa->keymic, &bytes[81], 16 );
+		wpa->key_version = bytes[6] & KEY_VERSION;
+	}
+
+	if( ( bytes[6] & PAIRWISE ) != 0 && 
+		( bytes[6] & INSTALL ) != 0 &&
+		( bytes[6] & ACK ) != 0 && 
+		( bytes[5] & MIC ) != 0 ) {
+		
+		if( !memcmp( &bytes[17], ZERO, 32 ) ) {
+			memcpy( wpa->anonce, &bytes[17], 32 );	
+		}
+        memcpy( wpa->keymic, &bytes[81], 16 );
+		wpa->key_version = bytes[6] & KEY_VERSION;
+	}
+
+	return 0;
+}
+
+int
+deal_normal_data( const u_char *bytes )
+{
+	AP_list->cur->encrypt = (bytes[27] == WPA_FLAG )?
+							WPA_ENCRYPT : WEP_ENCRYPT;
+
+	if( WEP_ENCRYPT == AP_list->cur->encrypt ) {
+		return 1;	
+	}
+
+	if( !AP_list->cur->is_eapol ) {
+		/* 可能在缓存的eapol包中 */
+			
+		return 0;
+	} else {
+		/* 可以被解密 */
+		return 1;
+	}
+}
+
 void *
 deal_frame_info( void *arg ) 
 {
@@ -172,9 +244,12 @@ deal_type( u_char **bytes, int *frame_len )
 	if( type == MANAGE_TYPE && subtype == BEACON ) {
 		*frame_len -= 10;
 		return deal_beacon_mac( &bytes_bak[10], frame_len );
-	} else if( type == DATA_TYPE && subtype == DATA ) {
+	} 
+	
+	if( type == DATA_TYPE && subtype == DATA ) {
 		return deal_data( bytes, frame_len );
 	}
+
 	return -1;	
 }
 
@@ -216,44 +291,23 @@ deal_data( u_char **bytes, int *frame_len )
 	
 	ret_eapol = is_eapol( bytes_bak );
 	ret_exist = is_exist( bssid );
+
 	if( ret_exist && ret_eapol ) {
+		AP_list->cur->is_eapol = 1;
 		return deal_eapol( bytes_bak ); 
-	} else if( ret_exist && !ret_eapol ) {
-		return deal_data_noeapol( bytes_bak );	
-	} else if( !ret_exist && ret_eapol ) {
+	} 
+	
+	if( ret_exist && !ret_eapol ) {
+		return deal_normal_data( bytes_bak );	
+	}
+	
+	if( !ret_exist && ret_eapol ) {
 		return eapol_cache( bytes_bak ); 
 	}
 	
 	return 0;
 }
 
-int
-deal_eapol( const u_char *bytes )
-{
-	AP_list->cur->is_eapol = 1;
-	// TODO：分析握手包的内容
-	return 0;
-}
-
-int
-deal_data_noeapol( const u_char *bytes )
-{
-	AP_list->cur->encrypt = (bytes[27] == WPA_FLAG )?
-							WPA_ENCRYPT : WEP_ENCRYPT;
-
-	if( WEP_ENCRYPT == AP_list->cur->encrypt ) {
-		return 1;	
-	}
-
-	if( !AP_list->cur->is_eapol ) {
-		/* 可能在缓存的eapol包中
-		 * 需要分清况讨论 */
-		return 0;
-	} else {
-		/* 可以被解密 */
-		return 1;
-	}
-}
 
 int
 deal_beacon_mac( const u_char *bytes, int *frame_len )
@@ -273,7 +327,7 @@ deal_beacon_mac( const u_char *bytes, int *frame_len )
 		if( NULL == AP_list->head ) {
 			AP_list->head = temp;
 			AP_list->tail = temp;
-		} else	{
+		} else {
 			AP_list->tail->next = temp;
 			AP_list->tail = AP_list->tail ->next;
 		}
