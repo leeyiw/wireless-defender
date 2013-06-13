@@ -90,10 +90,11 @@ is_exist( u_char *bssid )
 int
 is_eapol( const u_char *bytes )
 {
-	if( SNAP_DSAP == bytes[24] && SNAP_SSAP == bytes[25] 
-					&& SNAP_CONTROL == bytes[26] 
-					&& ETHERNET_TYPE_ONE == bytes[30] 
-					&& ETHERNET_TYPE_ONE == bytes[31] ) {
+	if( SNAP_DSAP == bytes[0] && 
+		SNAP_SSAP == bytes[1] && 
+		SNAP_CONTROL == bytes[2] && 
+		ETHERNET_TYPE_ONE == bytes[6] && 
+		ETHERNET_TYPE_SECOND == bytes[7] ) {
 		return 1;	
 	}
 	return 0;
@@ -132,8 +133,14 @@ deal_eapol( const u_char *bytes )
 		if( !memcmp( &bytes[17], ZERO, 32 ) ) {
 			memcpy( wpa->snonce, &bytes[17], 32 );	
 		}
+	
+		wpa->eapol_size = ( bytes[2] << 8 ) + bytes[3] + 4;
+		
         memcpy( wpa->keymic, &bytes[81], 16 );
-		wpa->key_version = bytes[6] & KEY_VERSION;
+		memcpy( wpa->eapol, &bytes, wpa->eapol_size );
+		memset( wpa->eapol + 81, 0, 16 );
+
+		wpa->keyver = bytes[6] & KEY_VERSION;
 	}
 
 	if( ( bytes[6] & PAIRWISE ) != 0 && 
@@ -144,8 +151,14 @@ deal_eapol( const u_char *bytes )
 		if( !memcmp( &bytes[17], ZERO, 32 ) ) {
 			memcpy( wpa->anonce, &bytes[17], 32 );	
 		}
+
+		wpa->eapol_size = ( bytes[2] << 8 ) + bytes[3] + 4;
+		
         memcpy( wpa->keymic, &bytes[81], 16 );
-		wpa->key_version = bytes[6] & KEY_VERSION;
+		memcpy( wpa->eapol, &bytes, wpa->eapol_size );
+		memset( wpa->eapol + 81, 0, 16 );
+
+		wpa->keyver = bytes[6] & KEY_VERSION;
 	}
 
 	return 0;
@@ -154,7 +167,7 @@ deal_eapol( const u_char *bytes )
 int
 deal_normal_data( const u_char *bytes )
 {
-	AP_list->cur->encrypt = (bytes[27] == WPA_FLAG )?
+	AP_list->cur->encrypt = (bytes[3] == WPA_FLAG )?
 							WPA_ENCRYPT : WEP_ENCRYPT;
 
 	if( WEP_ENCRYPT == AP_list->cur->encrypt ) {
@@ -163,7 +176,6 @@ deal_normal_data( const u_char *bytes )
 
 	if( !AP_list->cur->is_eapol ) {
 		/* 可能在缓存的eapol包中 */
-			
 		return 0;
 	} else {
 		/* 可以被解密 */
@@ -195,7 +207,7 @@ deal_frame_info( void *arg )
 		frame_t *frame = stage->frame;
 		head_len = ( int )frame->bytes[2];
 		frame->len -= head_len;
-		memcpy( frame->bytes, &frame->bytes[head_len], frame->len );
+		memmove( frame->bytes, &frame->bytes[head_len], frame->len );
 		
 		status = pthread_mutex_lock( &AP_list->lock );
 		if( status ) {
@@ -212,9 +224,9 @@ deal_frame_info( void *arg )
 			//free( frame );
 			frame = NULL;
 		}
-		if( return_val >= 0 ) {
-			pipe_send( &( stage->next ), frame );
-		}
+//		if( return_val >= 0 ) {
+//			pipe_send( &( stage->next ), frame );
+//		}
 
 		stage->is_ready = 0;
 		stage->is_finished = 1;
@@ -279,21 +291,23 @@ deal_data( u_char **bytes, int *frame_len )
 	
 	if( 3 == ( bytes_bak[1] & 3 ) ) {
 		*frame_len -= 30;
-		memcpy( bytes_bak, &bytes_bak[30], *frame_len );
+		memmove( bytes_bak, &bytes_bak[30], *frame_len );
 	} else {
-		*frame_len -= 24;	
-		memcpy( bytes_bak, &bytes_bak[24], *frame_len );
+		*frame_len -= 24;
+		memmove( bytes_bak, &bytes_bak[24], *frame_len - 24 );
 	}
 
 	if( memcmp( ssid, bssid, 6 ) ) {
 		return 0;
 	}
-	
+  
 	ret_eapol = is_eapol( bytes_bak );
 	ret_exist = is_exist( bssid );
 
 	if( ret_exist && ret_eapol ) {
 		AP_list->cur->is_eapol = 1;
+		*frame_len -= 8; 
+		memmove( bytes_bak, &bytes_bak[8], *frame_len );
 		return deal_eapol( bytes_bak ); 
 	} 
 	
@@ -349,8 +363,9 @@ deal_timestamp( const u_char *bytes , int *frame_len )
 void
 deal_ssid( const u_char *bytes , int *frame_len ) 
 { 
-	AP_list->tail->ssid= ( char * )malloc( bytes[1] + 1 ); 
+	AP_list->tail->ssid = bytes[1]; 
+	AP_list->tail->ssid = ( char * )malloc( bytes[1] + 1 ); 
 	
 	memcpy( AP_list->tail->ssid, &bytes[2],bytes [1] );
-	AP_list->tail->ssid[bytes[1]]= '\0';
+	AP_list->tail->ssid[bytes[1]] = '\0';
 }

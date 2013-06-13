@@ -52,6 +52,7 @@ typedef unsigned char u_char;
 
 typedef struct _AP_info {
 	char *ssid;		
+	int ssid_len;
 	u_char timestamp[8];
 	u_char bssid[6];
 	u_char sa[6];
