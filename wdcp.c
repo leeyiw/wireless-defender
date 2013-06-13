@@ -284,7 +284,7 @@ WD_wdcp_send(int sockfd, void *buf, size_t len, int flags)
 {
 	ssize_t n;
 
-	n = send(sockfd, buf, sizeof(buf), 0);
+	n = send(sockfd, buf, len, 0);
 	if(n == -1) {
 		err_exit("send data to client error");
 	}

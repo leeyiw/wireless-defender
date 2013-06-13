@@ -121,10 +121,12 @@ WD_server_handle_connection(void *arg)
 	if(WDCP_CONNECTION_SUCCESS != WD_wdcp_build_connection(fd)) {
 		return NULL;
 	}
+	printf("build connection success\n");
 	// 如果应用层建立连接成功则进行认证，如果验证失败则返回
 	if(WDCP_AUTHENTICATE_SUCCESS != WD_wdcp_authenticate(fd)) {
 		return NULL;
 	}
+	printf("authentication success\n");
 	// 进行数据通信
 	while(WDCP_PROCESS_SUCCESS != WD_wdcp_process(fd)) {
 		;
