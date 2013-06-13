@@ -268,12 +268,37 @@ run_time (8 bytes): 8字节无符号整形，从设备启动到当前时刻经�
 ### 4.4 AP列表数据包
 AP列表数据包是服务器在收到客户端的请求类型为REQ_TYPE_AP_LIST的数据请求数据包后，向客户端返回设备监测到的当前区域内的AP的列表的数据包。数据包内容如下：
 
-n_ap (1 bytes): 1字节无符号整形，AP列表中AP结构的个数。
+n_ap (1 byte): 1字节无符号整形，AP列表中AP结构的个数。
 
 ap_list (variable): 一个变长的AP结构体列表。AP结构体的个数在 *n_ap* 字段中给出。AP结构体的内容参见[AP结构定义][]。
 
 <a name="ap-structure-def"></a>
 #### 4.4.1 AP结构定义
-ssid_len (1 bytes): 1字节无符号整形，AP的SSID的字符串长度。
+ssid_len (1 byte): 1字节无符号整形，AP的SSID的字符串长度。
 
 ssid (variable): 变长的SSID字段，长度由ssid_len说明。无线网络的SSID。
+
+encrypt_type (1 byte): AP的加密方式。取值如下：
+
+<table>
+	<tr>
+		<td>encrypt_type</td>
+		<td>&#20540;</td>
+		<td>&#21547;&#20041;</td>
+	</tr>
+	<tr>
+		<td>ENC_TYPE_NONE</td>
+		<td>0x00</td>
+		<td>&#26410;&#21152;&#23494;</td>
+	</tr>
+	<tr>
+		<td>ENC_TYPE_WEP</td>
+		<td>0x01</td>
+		<td>&#37319;&#29992;WEP&#21152;&#23494;</td>
+	</tr>
+	<tr>
+		<td>ENC_TYPE_WPA</td>
+		<td>0x02</td>
+		<td>&#37319;&#29992;WPA&#21152;&#23494;</td>
+	</tr>
+</table>
