@@ -83,8 +83,9 @@ main(int argc, char *argv[])
 {
 
 	WD_init();
-	// 初始化服务器模块
-	//WD_server_init();
+
+	// 启动服务器模块
+	WD_server_start();
 
 	// 初始化抓包模块
 	WD_capture_init(WD_analyse_test, 10, (u_char *)1);
@@ -98,6 +99,9 @@ main(int argc, char *argv[])
 	WD_capture_destory();
 	// 清理抓包模块
 	WD_destory();
+
+	/* 等待服务器模块结束 */
+	WD_server_wait();
 	
 	pthread_exit( NULL );
 	return EXIT_SUCCESS;

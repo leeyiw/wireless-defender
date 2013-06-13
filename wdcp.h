@@ -53,23 +53,26 @@ struct packet {
 
 /**
  * 与客户端建立应用层连接
+ * @param fd 与客户端通信的套接字
  * @return 返回WDCP_CONNECTION_SUCCESS为成功
  *         返回WDCP_CONNECTION_FAIL为失败
  */
-extern int WD_wdcp_build_connection();
+extern int WD_wdcp_build_connection(int fd);
 
 /**
  * 对客户端进行身份验证
+ * @param fd 与客户端通信的套接字
  * @return 返回WDCP_AUTHENTICATE_SUCCESS为成功
  *         返回WDCP_AUTHENTICATE_FAIL为失败
  */
-extern int WD_wdcp_authenticate();
+extern int WD_wdcp_authenticate(int fd);
 
 /**
  * 与客户端进行数据通信
+ * @param fd 与客户端通信的套接字
  * @return 返回WDCP_PROCESS_SUCCESS为成功
  *         返回WDCP_PROCESS_FAIL为失败
  */
-extern int WD_wdcp_process();
+extern int WD_wdcp_process(int fd);
 
 #endif

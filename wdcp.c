@@ -10,20 +10,23 @@
 #include "wdcp.h"
 #include "server.h"
 #include "utils.h"
+#include "analyse.h"
+
+extern AP_list_t *AP_list;
 
 static int WD_wdcp_check_login(const char *username, uint8_t username_len,
 	const char *password);
-static int WD_wdcp_process_data_req(struct packet *p);
-static int WD_wdcp_req_basic_info(struct packet *p);
-static int WD_wdcp_req_ap_list(struct packet *p);
+static int WD_wdcp_process_data_req(int fd, struct packet *p);
+static int WD_wdcp_req_basic_info(int fd, struct packet *p);
+static int WD_wdcp_req_ap_list(int fd, struct packet *p);
 
 static ssize_t WD_wdcp_recv(int sockfd, void *buf, size_t len, int flags);
 static ssize_t WD_wdcp_send(int sockfd, void *buf, size_t len, int flags);
 static void WD_wdcp_new_pkt(struct packet *p);
 static void WD_wdcp_del_pkt(struct packet *p);
 static void WD_wdcp_rst_pkt(struct packet *p);
-static void WD_wdcp_send_pkt(struct packet *p);
-static void WD_wdcp_recv_pkt(struct packet *p);
+static void WD_wdcp_send_pkt(int fd, struct packet *p);
+static void WD_wdcp_recv_pkt(int fd, struct packet *p);
 static void WD_wdcp_packet_write_n(struct packet *p, void *data, size_t len);
 static void WD_wdcp_packet_write_u8(struct packet *p, uint8_t data);
 static void WD_wdcp_packet_write_u32(struct packet *p, uint32_t data);
@@ -33,7 +36,7 @@ static void WD_wdcp_packet_read_u8(struct packet *p, uint8_t *data);
 static void WD_wdcp_packet_read_u32(struct packet *p, uint32_t *data);
 
 int
-WD_wdcp_build_connection()
+WD_wdcp_build_connection(int fd)
 {
 	struct packet p;
 	uint8_t type;
@@ -41,7 +44,7 @@ WD_wdcp_build_connection()
 
 	WD_wdcp_new_pkt(&p);
 	// 接收请求连接数据包
-	WD_wdcp_recv_pkt(&p);
+	WD_wdcp_recv_pkt(fd, &p);
 	// 如果数据包长度大于规定长度则发送连接失败数据包
 	if(p.len != WDCP_CONN_REQ_PKT_LEN) {
 		goto fail;
@@ -63,7 +66,7 @@ WD_wdcp_build_connection()
 	WD_wdcp_rst_pkt(&p);
 	WD_wdcp_packet_write_u8(&p, CONN_RSP_PKT);
 	WD_wdcp_packet_write_u32(&p, SEC_TYPE_STANDARD);
-	WD_wdcp_send_pkt(&p);
+	WD_wdcp_send_pkt(fd, &p);
 	WD_wdcp_del_pkt(&p);
 	return WDCP_CONNECTION_SUCCESS;
 
@@ -72,13 +75,13 @@ fail:
 	WD_wdcp_rst_pkt(&p);
 	WD_wdcp_packet_write_u8(&p, CONN_FAIL_PKT);
 	WD_wdcp_packet_write_u32(&p, FAILED_PROTOCOL_ERR);
-	WD_wdcp_send_pkt(&p);
+	WD_wdcp_send_pkt(fd, &p);
 	WD_wdcp_del_pkt(&p);
 	return WDCP_CONNECTION_FAIL;
 }
 
 int
-WD_wdcp_authenticate()
+WD_wdcp_authenticate(int fd)
 {
 	struct packet p;
 	uint8_t type;
@@ -88,7 +91,7 @@ WD_wdcp_authenticate()
 
 	WD_wdcp_new_pkt(&p);
 	// 接收认证请求数据包
-	WD_wdcp_recv_pkt(&p);
+	WD_wdcp_recv_pkt(fd, &p);
 	// 如果数据包类型不为请求连接数据包则发送连接失败数据包
 	WD_wdcp_packet_read_u8(&p, &type);
 	if(type != AUTH_REQ_PKT) {
@@ -112,7 +115,7 @@ WD_wdcp_authenticate()
 	// 发送认证成功数据包
 	WD_wdcp_rst_pkt(&p);
 	WD_wdcp_packet_write_u8(&p, AUTH_RSP_PKT);
-	WD_wdcp_send_pkt(&p);
+	WD_wdcp_send_pkt(fd, &p);
 	WD_wdcp_del_pkt(&p);
 	return WDCP_AUTHENTICATE_SUCCESS;
 
@@ -121,13 +124,13 @@ fail:
 	WD_wdcp_rst_pkt(&p);
 	WD_wdcp_packet_write_u8(&p, AUTH_FAIL_PKT);
 	WD_wdcp_packet_write_u32(&p, failure_code);
-	WD_wdcp_send_pkt(&p);
+	WD_wdcp_send_pkt(fd, &p);
 	WD_wdcp_del_pkt(&p);
 	return WDCP_AUTHENTICATE_FAIL;
 }
 
 int
-WD_wdcp_process()
+WD_wdcp_process(int fd)
 {
 	struct packet p;
 	uint8_t type;
@@ -135,13 +138,13 @@ WD_wdcp_process()
 
 	WD_wdcp_new_pkt(&p);
 	// 接收数据通信数据包
-	WD_wdcp_recv_pkt(&p);
+	WD_wdcp_recv_pkt(fd, &p);
 	// 取出数据包类型
 	WD_wdcp_packet_read_u8(&p, &type);
 	// 根据不同类型，进行不同处理
 	switch(type) {
 	case DATA_REQ_PKT:
-		result = WD_wdcp_process_data_req(&p);
+		result = WD_wdcp_process_data_req(fd, &p);
 		break;
 	default:
 		result = WDCP_PROCESS_FAIL;
@@ -184,7 +187,7 @@ fail:
 }
 
 static int
-WD_wdcp_process_data_req(struct packet *p)
+WD_wdcp_process_data_req(int fd, struct packet *p)
 {
 	uint8_t req_type;
 
@@ -192,10 +195,10 @@ WD_wdcp_process_data_req(struct packet *p)
 	WD_wdcp_packet_read_u8(p, &req_type);
 	switch(req_type) {
 	case REQ_TYPE_BASIC_INFO:
-		WD_wdcp_req_basic_info(p);
+		WD_wdcp_req_basic_info(fd, p);
 		break;
 	case REQ_TYPE_AP_LIST:
-		WD_wdcp_req_ap_list(p);
+		WD_wdcp_req_ap_list(fd, p);
 		break;
 	default:
 		break;
@@ -205,7 +208,7 @@ WD_wdcp_process_data_req(struct packet *p)
 }
 
 static int
-WD_wdcp_req_basic_info(struct packet *p)
+WD_wdcp_req_basic_info(int fd, struct packet *p)
 {
 	WD_wdcp_rst_pkt(p);
 
@@ -213,21 +216,52 @@ WD_wdcp_req_basic_info(struct packet *p)
 	WD_wdcp_packet_write_u64(p, time(NULL) - WD_start_time);
 
 	// 发送数据包
-	WD_wdcp_send_pkt(p);
+	WD_wdcp_send_pkt(fd, p);
 
 	return WDCP_PROCESS_SUCCESS;
 }
 
 static int
-WD_wdcp_req_ap_list(struct packet *p)
+WD_wdcp_req_ap_list(int fd, struct packet *p)
 {
+	int n_ap, ret;
+	uint8_t *p_n_ap, *tmp;
+	AP_info *a;
+
 	WD_wdcp_rst_pkt(p);
 
-	// 写入AP个数
+	// 记录AP个数的偏移量
+	p_n_ap = p->p;
 	WD_wdcp_packet_write_u8(p, 0);
+	
+	// 将AP列表加锁
+	ret = pthread_mutex_lock(&AP_list->lock);
+	if(ret != 0) {
+		err_exit("lock AP_list error");
+	}
 
+	// 循环写入AP信息
+	for(n_ap = 0, a = AP_list->head; a != NULL; n_ap++, a = a->next) {
+		uint8_t ssid_len;
+		ssid_len = strlen(a->ssid);
+		WD_wdcp_packet_write_u8(p, ssid_len);
+		WD_wdcp_packet_write_n(p, a->ssid, ssid_len);
+	}
+
+	// 将AP列表解锁
+	ret = pthread_mutex_unlock(&AP_list->lock);
+	if(ret != 0) {
+		err_exit("unlock AP_list error");
+	}
+
+	// 写入AP个数
+	tmp = p->p;
+	p->p = p_n_ap;
+	WD_wdcp_packet_write_u8(p, n_ap);
+	p->p = tmp;
+	
 	// 发送数据包
-	WD_wdcp_send_pkt(p);
+	WD_wdcp_send_pkt(fd, p);
 
 	return WDCP_PROCESS_SUCCESS;
 }
@@ -237,7 +271,7 @@ WD_wdcp_recv(int sockfd, void *buf, size_t len, int flags)
 {
 	ssize_t n;
 
-	n = recv(client_fd, buf, len, 0);
+	n = recv(sockfd, buf, len, 0);
 	if(n == -1) {
 		err_exit("receive data from client error");
 	}
@@ -250,7 +284,7 @@ WD_wdcp_send(int sockfd, void *buf, size_t len, int flags)
 {
 	ssize_t n;
 
-	n = send(client_fd, buf, sizeof(buf), 0);
+	n = send(sockfd, buf, sizeof(buf), 0);
 	if(n == -1) {
 		err_exit("send data to client error");
 	}
@@ -282,15 +316,15 @@ WD_wdcp_rst_pkt(struct packet *p)
 }
 
 static void
-WD_wdcp_send_pkt(struct packet *p)
+WD_wdcp_send_pkt(int fd, struct packet *p)
 {
-	WD_wdcp_send(client_fd, p->buf, p->p - p->buf, 0);
+	WD_wdcp_send(fd, p->buf, p->p - p->buf, 0);
 }
 
 static void
-WD_wdcp_recv_pkt(struct packet *p)
+WD_wdcp_recv_pkt(int fd, struct packet *p)
 {
-	p->len = WD_wdcp_recv(client_fd, p->buf, WDCP_PACKET_LEN, 0);
+	p->len = WD_wdcp_recv(fd, p->buf, WDCP_PACKET_LEN, 0);
 	p->p = p->buf;
 }
 
