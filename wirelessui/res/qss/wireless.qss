@@ -1,0 +1,169 @@
+
+/*
+FileName: style_wirelessdefender.qss
+
+*/
+
+/*networkButton*/
+QPushButton#networkButton{
+	background-image: url(:/res/image/network.png);
+	background-position: center;
+	background-repeat: no-repeat;
+	border: 0px;
+}
+QPushButton#networkButton:hover{
+	background-image: url(:/res/image/network2.png);
+	background-position: center;
+	background-repeat: no-repeat;
+	border: 0px;
+}
+QPushButton#networkButton:checked{
+	background-image: url(:/res/image/network2.png);
+	background-position: center;
+	background-repeat: no-repeat;
+	border: 0px;
+}
+
+/*arpButton*/
+QPushButton#arpButton{
+	background-image: url(:/res/image/arp.png);
+	background-position: center;
+	background-repeat: no-repeat;
+	border: 0px;
+}
+QPushButton#arpButton:hover{
+	background-image: url(:/res/image/arp2.png);
+	background-position: center;
+	background-repeat: no-repeat;
+	border: 0px;
+}
+QPushButton#arpButton:checked{
+	background-image: url(:/res/image/arp2.png);
+	background-position: center;
+	background-repeat: no-repeat;
+	border: 0px;
+}
+
+/*anticrackButton*/
+QPushButton#anticrackButton{
+	background-image: url(:/res/image/anticrack.png);
+	background-position: center;
+	background-repeat: no-repeat;
+	border: 0px;
+}
+QPushButton#anticrackButton:hover{
+	background-image: url(:/res/image/anticrack2.png);
+	background-position: center;
+	background-repeat: no-repeat;
+	border: 0px;
+}
+QPushButton#anticrackButton:checked{
+	background-image: url(:/res/image/anticrack2.png);
+	background-position: center;
+	background-repeat: no-repeat;
+	border: 0px;
+}
+
+/*fakeapButton*/
+QPushButton#fakeapButton{
+	background-image: url(:/res/image/fakeap.png);
+	background-position: center;
+	background-repeat: no-repeat;
+	border: 0px;
+}
+QPushButton#fakeapButton:hover{
+	background-image: url(:/res/image/fakeap2.png);
+	background-position: center;
+	background-repeat: no-repeat;
+	border: 0px;
+}
+QPushButton#fakeapButton:checked{
+	background-image: url(:/res/image/fakeap2.png);
+	background-position: center;
+	background-repeat: no-repeat;
+	border: 0px;
+}
+
+/*devicesButton*/
+QPushButton#devicesButton{
+	background-image: url(:/res/image/devices.png);
+	background-position: center;
+	background-repeat: no-repeat;
+	border: 0px;
+}
+QPushButton#devicesButton:hover{
+	background-image: url(:/res/image/devices2.png);
+	background-position: center;
+	background-repeat: no-repeat;
+	border: 0px;
+}
+QPushButton#devicesButton:checked{
+	background-image: url(:/res/image/devices2.png);
+	background-position: center;
+	background-repeat: no-repeat;
+	border: 0px;
+}
+
+
+
+/*closeButton*/
+QPushButton#closeButton{
+	background-image: url(:/res/image/x.png);
+	border: 0px;
+}
+QPushButton#closeButton:hover{
+	background-image: url(:/res/image/x2.png);
+	border: 0px;
+}
+QPushButton#closeButton:checked{
+	background-image: url(:/res/image/x2.png);
+	border: 0px;
+}
+
+/*maxButton*/
+QPushButton#maxButton{
+	background-image: url(:/res/image/max.png);
+	border: 0px;
+}
+QPushButton#maxButton:hover{
+	background-image: url(:/res/image/max2.png);
+	border: 0px;
+}
+QPushButton#maxButton:checked{
+	background-image: url(:/res/image/max2.png);
+	border: 0px;
+}
+
+/*minButton*/
+QPushButton#minButton{
+	background-image: url(:/res/image/min.png);
+	border: 0px;
+}
+QPushButton#minButton:hover{
+	background-image: url(:/res/image/min2.png);
+	border: 0px;
+}
+QPushButton#minButton:checked{
+	background-image: url(:/res/image/min2.png);
+	border: 0px;
+}
+
+/*setButton*/
+QPushButton#setButton{
+	background-image: url(:/res/image/set.png);
+	background-position: center;
+	background-repeat: no-repeat;
+	border: 0px;
+}
+QPushButton#setButton:hover{
+	background-image: url(:/res/image/set2.png);
+	background-position: center;
+	background-repeat: no-repeat;
+	border: 0px;
+}
+QPushButton#setButton:checked{
+	background-image: url(:/res/image/set2.png);
+	background-position: center;
+	background-repeat: no-repeat;
+	border: 0px;
+}

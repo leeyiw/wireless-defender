@@ -1,0 +1,26 @@
+<RCC>
+    <qresource prefix="/">
+        <file>res/image/anticrack.png</file>
+        <file>res/image/anticrack2.png</file>
+        <file>res/image/arp.png</file>
+        <file>res/image/arp2.png</file>
+        <file>res/image/devices.png</file>
+        <file>res/image/devices2.png</file>
+        <file>res/image/fakeap.png</file>
+        <file>res/image/fakeap2.png</file>
+        <file>res/image/frame.png</file>
+        <file>res/image/frame0.jpg</file>
+        <file>res/image/max.png</file>
+        <file>res/image/max2.png</file>
+        <file>res/image/min.png</file>
+        <file>res/image/min2.png</file>
+        <file>res/image/network.png</file>
+        <file>res/image/network2.png</file>
+        <file>res/image/set.png</file>
+        <file>res/image/set2.png</file>
+        <file>res/image/title.png</file>
+        <file>res/image/x.png</file>
+        <file>res/image/x2.png</file>
+        <file>res/qss/wireless.qss</file>
+    </qresource>
+</RCC>
