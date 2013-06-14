@@ -3,37 +3,35 @@
 #include <linux/if.h>
 #include <netinet/in.h>
 #include <unistd.h>
+#include <pthread.h>
 
 #include "server.h"
 #include "config.h"
 #include "wdcp.h"
 
-int client_fd;
-/* server模块子进程id号 */
-pid_t server_pid;
+/**
+ * 监听并处理客户端请求函数
+ */
+void *WD_server_main_loop(void *arg);
 
+/* server模块线程ID */
+static pthread_t WD_server_thread_id;
+/* 监听连接请求的套接字 */
 static int listen_fd;
-
-static void WD_server_handle_connection();
+/* 处理连接请求的函数 */
+static void *WD_server_handle_connection(void *arg);
 
 /**
  * 初始化服务器模块
  */
 void
-WD_server_init()
+WD_server_start()
 {
+	int ret;
+
 	struct ifreq ifr;
 	struct sockaddr_in *listen_addr;
 
-	// 创建server模块进程
-	server_pid = fork();
-	if(server_pid > 0) {
-		// 父进程返回
-		return;
-	} else if(server_pid == -1) {
-		// 异常情况
-		err_exit("create server process error");
-	}
 	// 创建监听描述符
 	listen_fd = socket(AF_INET, SOCK_STREAM, 0);
 	if(-1 == listen_fd) {
@@ -55,22 +53,40 @@ WD_server_init()
 		err_exit1("bind interface '%s' error", g_server_interface);
 	}
 
-	// 监听客户端连接请求
-	WD_server_main_loop();
+	// 创建server模块线程
+	ret = pthread_create(&WD_server_thread_id, NULL, WD_server_main_loop, NULL);
+	if(ret != 0) {
+		err_exit("create server thread error");
+	}
 
-	// 退出
-	exit(EXIT_SUCCESS);
+	return;
+}
+
+/**
+ * 等待服务器模块线程结束
+ */
+void
+WD_server_wait()
+{
+	int ret;
+	void *retval;
+
+	ret = pthread_join(WD_server_thread_id, &retval);
+	if(ret != 0) {
+		err_exit("join server thread error");
+	}
 }
 
 /**
  * 监听并处理客户端请求函数
  */
-void
-WD_server_main_loop()
+void *
+WD_server_main_loop(void *arg)
 {
 	struct sockaddr_in client_addr;
 	socklen_t client_addr_len;
-	pid_t pid;
+	pthread_t tid;
+	long client_fd, ret;
 
 	// 监听
 	if(-1 == listen(listen_fd, 64)) {
@@ -83,13 +99,11 @@ WD_server_main_loop()
 		if(client_fd == -1) {
 			err_info("accept new connection error");
 		}
-		pid = fork();
-		if(pid == 0) {
-			// 子进程
-			WD_server_handle_connection();
-			return;
-		} else if(pid == -1) {
-			err_info("fork for client new connection error");
+		/* 创建新线程处理连接请求 */
+		ret = pthread_create(&tid, NULL, WD_server_handle_connection,
+			(void *)client_fd);
+		if(ret != 0) {
+			err_exit("create server thread error");
 		}
 		// 父进程继续接收连接
 	}
@@ -98,19 +112,24 @@ WD_server_main_loop()
 /**
  * 处理客户端的请求
  */
-void
-WD_server_handle_connection()
+void *
+WD_server_handle_connection(void *arg)
 {
+	long fd = (long)arg;
+
 	// 如果应用层建立连接失败则返回
-	if(WDCP_CONNECTION_SUCCESS != WD_wdcp_build_connection()) {
-		return;
+	if(WDCP_CONNECTION_SUCCESS != WD_wdcp_build_connection(fd)) {
+		return NULL;
 	}
+	printf("build connection success\n");
 	// 如果应用层建立连接成功则进行认证，如果验证失败则返回
-	if(WDCP_AUTHENTICATE_SUCCESS != WD_wdcp_authenticate()) {
-		return;
+	if(WDCP_AUTHENTICATE_SUCCESS != WD_wdcp_authenticate(fd)) {
+		return NULL;
 	}
+	printf("authentication success\n");
 	// 进行数据通信
-	while(WDCP_PROCESS_SUCCESS != WD_wdcp_process()) {
+	while(WDCP_PROCESS_SUCCESS != WD_wdcp_process(fd)) {
 		;
 	}
+	return NULL;
 }

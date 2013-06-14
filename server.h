@@ -4,10 +4,7 @@
 #define WD_SERVER_LISTEN_PORT		9387
 #define WD_SERVER_LISTEN_BACKLOG	64
 
-extern void WD_server_init();
-extern void WD_server_main_loop();
-
-extern int client_fd;
-extern pid_t server_pid;
+extern void WD_server_start();
+extern void WD_server_wait();
 
 #endif
