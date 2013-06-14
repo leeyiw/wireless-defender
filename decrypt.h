@@ -2,6 +2,7 @@
 #define _DECRYPT_H
 
 #include "analyse.h"
+#include "flow.h"
 #include <openssl/hmac.h>
 #include <openssl/rc4.h>
 #include <openssl/sha.h>

@@ -213,7 +213,7 @@ deal_frame_info( void *arg )
 		if( status ) {
 			user_exit( "Cannot lock mutex!" );		
 		}
-		return_val = deal_type( &frame->bytes, &frame->len );
+		return_val = deal_type( &frame );
 		
 		status = pthread_mutex_unlock( &AP_list->lock );
 		if( status ) {
@@ -247,9 +247,11 @@ deal_frame_info( void *arg )
 /* 解析帧中的类型和子类型信息 */
 
 int
-deal_type( u_char **bytes, int *frame_len )  
+deal_type( frame_t **frame )  
 {
-	u_char *bytes_bak = *bytes;
+	u_char *bytes_bak = ( *frame )->bytes;
+	
+	int	*frame_len = &( ( *frame )->len ); 
 	int type = bytes_bak[0] % 16;
 	int subtype = ( bytes_bak[0] / 16 ) % 16;
 
@@ -259,7 +261,7 @@ deal_type( u_char **bytes, int *frame_len )
 	} 
 	
 	if( type == DATA_TYPE && subtype == DATA ) {
-		return deal_data( bytes, frame_len );
+		return deal_data( frame );
 	}
 
 	return -1;	
@@ -268,25 +270,35 @@ deal_type( u_char **bytes, int *frame_len )
 /* 不加密的SNAP开头为AA AA 03 00 00 00.... */
 
 int
-deal_data( u_char **bytes, int *frame_len )
+deal_data( frame_t **frame )
 {
 	u_char bssid[6];
 	u_char stmac[6];
-	u_char *bytes_bak = *bytes;
+	u_char sa[6];
+	u_char da[6];
+	u_char *bytes_bak = ( *frame )->bytes;
 	int ret_eapol, ret_exist;
 
 	switch( bytes_bak[1] & 3 ) {
 		case 0: 								/* IBSS */	
+				memcpy( da, &bytes_bak[4], 6 );
+				memcpy( sa, &bytes_bak[10], 6 );
 				memcpy( bssid, &bytes_bak[16], 6 );
 				break;	
 		case 1: 								/* TODS */	
 				memcpy( bssid, &bytes_bak[4], 6 );
+				memcpy( sa, &bytes_bak[10], 6 );
+				memcpy( da, &bytes_bak[16], 6 );
 				break;						
 		case 2: 								/* FROMDS */
-				memcpy( bssid, &bytes_bak[10], 6 ); 
+				memcpy( da, &bytes_bak[4], 6 );
+				memcpy( bssid, &bytes_bak[10], 6 );
+				memcpy( sa, &bytes_bak[16], 6 );
 				break;
 		case 3: 								/* WDS */
 				memcpy( bssid, &bytes_bak[10], 6 );
+				memcpy( da, &bytes_bak[16], 6 );
+				memcpy( sa, &bytes_bak[22], 6 );
 				break;	
 	}
 	
@@ -309,20 +321,23 @@ deal_data( u_char **bytes, int *frame_len )
 	memcpy( wpa->stmac, stmac, 6 );
 	memcpy( wpa->bssid, bssid, 6 );
 
+	memcpy( ( *frame )->da, da, 6 );
+	memcpy( ( *frame )->sa, sa, 6 );
+
 	if( 3 == ( bytes_bak[1] & 3 ) ) {
-		*frame_len -= 30;
-		memmove( bytes_bak, &bytes_bak[30], *frame_len );
+		( *frame )->len -= 30;
+		memmove( bytes_bak, &bytes_bak[30], ( *frame )->len );
 	} else {
-		*frame_len -= 24;
-		memmove( bytes_bak, &bytes_bak[24], *frame_len - 24 );
+		( *frame )->len -= 24;
+		memmove( bytes_bak, &bytes_bak[24], ( *frame )->len );
 	}
 
 	ret_eapol = is_eapol( bytes_bak );
 	ret_exist = is_exist( bssid );
 
 	if( ret_exist && ret_eapol ) {
-		*frame_len -= 8; 
-		memmove( bytes_bak, &bytes_bak[8], *frame_len );
+		( *frame )->len -= 8; 
+		memmove( bytes_bak, &bytes_bak[8], ( *frame )->len );
 		AP_list->cur->is_eapol = 1;
 
 		return deal_eapol( bytes_bak ); 

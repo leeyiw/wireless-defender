@@ -69,6 +69,8 @@ typedef struct AP_list {
 
 typedef struct frame {
 	u_char *bytes;
+	u_char sa[6];
+	u_char da[6];
 	int len;
 } frame_t;
 
@@ -91,9 +93,9 @@ extern int is_exist(u_char *bssid);
 extern int is_eapol( const u_char *bytes );
 extern int eapol_cache( const u_char *bytes );
 extern void *deal_frame_info( void *arg );
-extern int deal_type( u_char **bytes, int *packet_len );
+extern int deal_type( frame_t **frame );
 extern int deal_beacon_mac( const u_char *bytes, int *packet_len );
-extern int deal_data( u_char **bytes, int *packet_len );
+extern int deal_data( frame_t **frame );
 extern int deal_eapol( const u_char *bytes );
 extern int deal_normal_data( const u_char *bytes );
 extern void deal_timestamp( const u_char *bytes, int *packet_len ); 

@@ -289,9 +289,11 @@ void *
 pre_encrypt( void *arg )
 {
 	int status;
-	stage_t *stage = ( stage_t * )arg;
-	AP_info *cur = NULL;
 	u_char pmk[40];
+	u_char key[40];
+	AP_info *cur = NULL;
+	frame_t *frame = NULL;
+	stage_t *stage = ( stage_t * )arg;
 
 	while(1) {
 		status = pthread_mutex_lock( &stage->mutex );	
@@ -307,15 +309,14 @@ pre_encrypt( void *arg )
 			}
 		}
 
-		frame_t *frame = stage->frame;
+		frame = stage->frame;
 
 		if( frame != NULL ) {
 			status = pthread_mutex_lock( &AP_list->lock );
 			cur = AP_list->cur;
-
 			status = pthread_mutex_unlock( &AP_list->lock );
+
 			if( WEP_ENCRYPT  == cur->encrypt ) {
-				u_char key[40];
 
 				merge_iv( frame->bytes, frame->len, key );	
 				memmove( frame->bytes, &( frame->bytes[4] ), 
@@ -324,20 +325,14 @@ pre_encrypt( void *arg )
 								frame->len - 4,
 								IV_LEN + ( user->passwd_len ) / 2 );
 
-				int i;
-				for( i = 0; i < frame->len - 4; i++ ) {
-					printf( "%x ", frame->bytes[i] );
-				}
-				printf( "\n\n" );
+				//analyse_flow( frame );
 
 			} else if( WPA_ENCRYPT == cur->encrypt ) {
 				
 				wpa->valid_ptk = calc_ptk( pmk );
 
 				if( TKIP == wpa->keyver ) {
-					if( !wpa->valid_ptk ) {
-						printf( "haha\n" );
-					}
+
 					decrypt_tkip( frame->bytes, frame->len, 
 										wpa->ptk + 32 );		
 				} else {
