@@ -9,15 +9,25 @@
 #include "analyse.h"
 #include "preprocess.h"
 #include "decrypt.h"
+#include "flow.h"
 
 /* 起始运行时间 */
 time_t WD_start_time;
 
-AP_list_t *AP_list = NULL;
-queue_t *q = NULL;
-u_char user_stmac[105] = { 0x8c, 0xa9, 0x82, 0x3c, 0xd8, 0x90 };
 user_info_t *user = NULL;
-WPA_info_t *wpa = NULL;
+u_char user_stmac[105] = { 0x8c, 0xa9, 0x82, 0x3c, 0xd8, 0x90 };
+
+void
+user_config_init()
+{
+	u_char passwd[30] = { 0x1, 0x2, 0x3, 0x4, 0x5, 
+							0x6, 0x7, 0x8, 0x9, 0x0 };
+
+	user = ( user_info_t * )malloc( sizeof( user_info_t ) ); 
+
+	memcpy( user->passwd, passwd, 10 );
+	user->passwd_len = 10;
+}
 
 /**
  * 主程序全局初始化函数
@@ -31,32 +41,11 @@ WD_init()
 	}
 	// 初始化配置文件模块
 	WD_config_init();
+
+	user_config_init();
 	analyse_init();
-}
-
-void
-analyse_init()
-{
-	u_char passwd[30] = { 0x1, 0x2, 0x3, 0x4, 0x5, 
-							0x6, 0x7, 0x8, 0x9, 0x0 };
-
-	user = ( user_info_t * )malloc( sizeof( user_info_t ) ); 
-
-	wpa = ( WPA_info_t * )malloc( sizeof( WPA_info_t ) );	
-
-	q = ( queue_t *)malloc( sizeof( queue_t ) );	
-	q->head = 1;
-	q->tail = 0;
-
-	AP_list = ( AP_list_t * )malloc( sizeof( AP_list_t ) );
-	AP_list->head = NULL;
-	AP_list->tail = NULL;
-	AP_list->cur = NULL;
-
-	pthread_mutex_init( &AP_list->lock, NULL );
-	
-	memcpy( user->passwd, passwd, 10 );
-	user->passwd_len = 10;
+	decrypt_init();
+	analyse_flow_init();
 }
 
 void

@@ -2,6 +2,9 @@
 #include "wireless-defender.h"
 #include "analyse.h"
 #include "decrypt.h"
+#include "flow.h"
+
+WPA_info_t *wpa = NULL;
 
 const short TkipSbox[2][256]=
 {
@@ -74,6 +77,12 @@ const short TkipSbox[2][256]=
         0xC382, 0xB029, 0x775A, 0x111E, 0xCB7B, 0xFCA8, 0xD66D, 0x3A2C
     }
 };
+
+void
+decrypt_init()
+{
+	wpa = ( WPA_info_t * )malloc( sizeof( WPA_info_t ) );	
+}
 
 void 
 merge_iv( u_char *bytes, int frame_len,	u_char key[40] )
@@ -321,11 +330,12 @@ pre_encrypt( void *arg )
 				merge_iv( frame->bytes, frame->len, key );	
 				memmove( frame->bytes, &( frame->bytes[4] ), 
 														frame->len -4 );
+				frame->len -= 4;
 				wep_decrypt( frame->bytes, key,	
 								frame->len - 4,
 								IV_LEN + ( user->passwd_len ) / 2 );
 
-				//analyse_flow( frame );
+				analyse_flow( frame );
 
 			} else if( WPA_ENCRYPT == cur->encrypt ) {
 				

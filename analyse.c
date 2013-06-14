@@ -2,14 +2,32 @@
 #include "preprocess.h"
 #include "decrypt.h"
 
-u_char *eapol[CACHE_SIZE];
+queue_t *q = NULL;
+AP_list_t *AP_list = NULL;
+
 int eapol_cur = 0;
+u_char *eapol[CACHE_SIZE];
 
 static u_char ZERO[32] = 
 "\x00\x00\x00\x00\x00\x00\x00\x00"
 "\x00\x00\x00\x00\x00\x00\x00\x00"
 "\x00\x00\x00\x00\x00\x00\x00\x00"
 "\x00\x00\x00\x00\x00\x00\x00\x00";
+
+void
+analyse_init()
+{
+	q = ( queue_t *)malloc( sizeof( queue_t ) );	
+	q->head = 1;
+	q->tail = 0;
+
+	AP_list = ( AP_list_t * )malloc( sizeof( AP_list_t ) );
+	AP_list->head = NULL;
+	AP_list->tail = NULL;
+	AP_list->cur = NULL;
+
+	pthread_mutex_init( &AP_list->lock, NULL );
+}
 
 void 
 WD_analyse_test( u_char *user, const struct pcap_pkthdr *h,
@@ -37,41 +55,6 @@ WD_analyse_test( u_char *user, const struct pcap_pkthdr *h,
 	pipe_send( &( prepline.head ), frame );
 }
 
-//void WD_analyse( u_char *user, const struct pcap_pkthdr *h, const u_char *bytes )
-//{
-//	//struct frame_info *fi = NULL;
-//
-//	//fi = deal_frame_info( ( const u_char * )bytes, h->caplen );
-//	//if( fi->type == MANAGE_TYPE && fi->subtype == BEACON ) {
-//	//	user_info( "beacon frame detected!" );
-//	//}
-//	//free( fi );
-//}
-
-/* 解密wep加密的内容，为无线流量分析 */
-
-//void
-//decrypt_wep( struct frame_info **fi_ptr, u_char *passwd ) 
-//{
-//	int i, j = 3;
-//	RC4_KEY s;
-//	u_char key[10];
-//	struct frame_info *fi = *fi_ptr;
-//
-//	/* iv和密码合成密钥 */
-//
-//	memcpy( key, fi->db->data, 3 ) ;
-//	for( i = 0; i < 10; i += 2 )  {
-//		key[j++] = passwd[i]*16 + passwd[i+1];
-//	}
-//
-//	/* 使用openssl带的RC4算法 */
-//
-//	RC4_set_key( &s, 8, key ) ;
-//	RC4( &s, fi->frame_len - 4, &fi->db->data[4], &fi->db->data[4] ) ;
-//}
-
-/* 帧处理的开始 */
 int
 is_exist( u_char *bssid ) 
 {

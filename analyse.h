@@ -87,6 +87,7 @@ extern u_char user_stmac[105];
 extern u_char *eapol[CACHE_SIZE];
 extern int eapol_cur;
 
+extern void analyse_init();
 extern void WD_analyse_test(u_char *user, const struct pcap_pkthdr *h,
 			   	const u_char *bytes);
 extern int is_exist(u_char *bssid);
