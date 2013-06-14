@@ -32,6 +32,8 @@ typedef struct WPA_info {
 	u_char snonce[32];
 	u_char anonce[32];
 	u_char keymic[20];
+	u_char bssid[6];
+	u_char stmac[6];
 	u_char ptk[80];
 	u_char eapol[256];
 	int eapol_size;

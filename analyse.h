@@ -44,7 +44,7 @@
 #define INSTALL					0x40	
 #define ACK						0x80
 #define MIC						0x01
-#define	KEY_VERSION				0x07 
+#define	KEY_VERSION				7 
 
 #define CACHE_SIZE		100		/* 待测试 */
 
@@ -55,7 +55,6 @@ typedef struct _AP_info {
 	int ssid_len;
 	u_char timestamp[8];
 	u_char bssid[6];
-	u_char sa[6];
 	int encrypt;
 	int is_eapol;
 	struct _AP_info *next;
@@ -81,7 +80,7 @@ typedef struct queue {
 
 extern queue_t *q;
 extern AP_list_t *AP_list; 
-extern u_char ssid[105];
+extern u_char user_stmac[105];
 
 extern u_char *eapol[CACHE_SIZE];
 extern int eapol_cur;

@@ -15,7 +15,7 @@ time_t WD_start_time;
 
 AP_list_t *AP_list = NULL;
 queue_t *q = NULL;
-u_char ssid[105] = { 0x8c, 0x21, 0x0a, 0x76, 0x54, 0xec };
+u_char user_stmac[105] = { 0x8c, 0xa9, 0x82, 0x3c, 0xd8, 0x90 };
 user_info_t *user = NULL;
 WPA_info_t *wpa = NULL;
 
@@ -87,7 +87,7 @@ main(int argc, char *argv[])
 	//WD_server_init();
 
 	// 初始化抓包模块
-	WD_capture_init(WD_analyse_test, 301, (u_char *)1);
+	WD_capture_init(WD_analyse_test, 50, (u_char *)1);
 	//启动预处理模块
 	WD_pipe_create(&prepline);	
 	// 启动抓包

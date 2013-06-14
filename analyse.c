@@ -130,7 +130,7 @@ deal_eapol( const u_char *bytes )
 		( bytes[6] & ACK ) == 0 && 
 		( bytes[5] & MIC ) != 0 ) {
 		
-		if( !memcmp( &bytes[17], ZERO, 32 ) ) {
+		if( memcmp( &bytes[17], ZERO, 32 ) != 0 ) {
 			memcpy( wpa->snonce, &bytes[17], 32 );	
 		}
 	
@@ -148,7 +148,7 @@ deal_eapol( const u_char *bytes )
 		( bytes[6] & ACK ) != 0 && 
 		( bytes[5] & MIC ) != 0 ) {
 		
-		if( !memcmp( &bytes[17], ZERO, 32 ) ) {
+		if( memcmp( &bytes[17], ZERO, 32 ) != 0 ) {
 			memcpy( wpa->anonce, &bytes[17], 32 );	
 		}
 
@@ -224,9 +224,9 @@ deal_frame_info( void *arg )
 			//free( frame );
 			frame = NULL;
 		}
-//		if( return_val >= 0 ) {
-//			pipe_send( &( stage->next ), frame );
-//		}
+		if( return_val >= 0 ) {
+			pipe_send( &( stage->next ), frame );
+		}
 
 		stage->is_ready = 0;
 		stage->is_finished = 1;
@@ -271,6 +271,7 @@ int
 deal_data( u_char **bytes, int *frame_len )
 {
 	u_char bssid[6];
+	u_char stmac[6];
 	u_char *bytes_bak = *bytes;
 	int ret_eapol, ret_exist;
 
@@ -289,6 +290,25 @@ deal_data( u_char **bytes, int *frame_len )
 				break;	
 	}
 	
+	switch( bytes_bak[1] & 3 ) {
+		case 1: 								/* TODS */	
+				memcpy( stmac, &bytes_bak[10], 6 );
+				break;						
+		case 2: 								/* FROMDS */
+				memcpy( stmac, &bytes_bak[4], 6 ); 
+				break;
+		case 3: 								/* WDS */
+				memcpy( stmac, &bytes_bak[10], 6 );
+				break;	
+	}
+
+	if( memcmp( stmac, user_stmac, 6 ) ) {
+		return 0;
+	}
+
+	memcpy( wpa->stmac, stmac, 6 );
+	memcpy( wpa->bssid, bssid, 6 );
+
 	if( 3 == ( bytes_bak[1] & 3 ) ) {
 		*frame_len -= 30;
 		memmove( bytes_bak, &bytes_bak[30], *frame_len );
@@ -297,17 +317,14 @@ deal_data( u_char **bytes, int *frame_len )
 		memmove( bytes_bak, &bytes_bak[24], *frame_len - 24 );
 	}
 
-	if( memcmp( ssid, bssid, 6 ) ) {
-		return 0;
-	}
-  
 	ret_eapol = is_eapol( bytes_bak );
 	ret_exist = is_exist( bssid );
 
 	if( ret_exist && ret_eapol ) {
-		AP_list->cur->is_eapol = 1;
 		*frame_len -= 8; 
 		memmove( bytes_bak, &bytes_bak[8], *frame_len );
+		AP_list->cur->is_eapol = 1;
+
 		return deal_eapol( bytes_bak ); 
 	} 
 	
@@ -333,7 +350,6 @@ deal_beacon_mac( const u_char *bytes, int *frame_len )
 	if( !is_exist( bssid ) ) {
 		temp = ( AP_info * )malloc( sizeof( AP_info ) );
 
-		memcpy( temp->sa, bytes, 6 );
 		memcpy( temp->bssid, &bytes[6], 6 );
 		temp->next = NULL;
 		*frame_len -= 14;
@@ -363,7 +379,7 @@ deal_timestamp( const u_char *bytes , int *frame_len )
 void
 deal_ssid( const u_char *bytes , int *frame_len ) 
 { 
-	AP_list->tail->ssid = bytes[1]; 
+	AP_list->tail->ssid_len = bytes[1]; 
 	AP_list->tail->ssid = ( char * )malloc( bytes[1] + 1 ); 
 	
 	memcpy( AP_list->tail->ssid, &bytes[2],bytes [1] );

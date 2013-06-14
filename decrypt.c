@@ -177,7 +177,6 @@ calc_ptk( u_char pmk[40] )
 	u_char mic[20];
 	char ssid[40] = {0};
 	char *passwd = "wufeishizhu.";
-	AP_info *cur = AP_list->cur;
 
 	memcpy( ssid, AP_list->cur->ssid, strlen( AP_list->cur->ssid ) );
 	ssid[strlen(ssid)] = '\0';
@@ -186,12 +185,12 @@ calc_ptk( u_char pmk[40] )
 
     memcpy( pke, "Pairwise key expansion", 23 );
 
-    if( memcmp( cur->sa, cur->bssid, 6 ) < 0 ) {
-        memcpy( pke + 23, cur->sa, 6 );
-        memcpy( pke + 29, cur->bssid, 6 );
+    if( memcmp( wpa->stmac, wpa->bssid, 6 ) < 0 ) {
+        memcpy( pke + 23, wpa->stmac, 6 );
+        memcpy( pke + 29, wpa->bssid, 6 );
     } else {
-        memcpy( pke + 23, cur->bssid, 6 );
-        memcpy( pke + 29, cur->sa, 6 );
+        memcpy( pke + 23, wpa->bssid, 6 );
+        memcpy( pke + 29, wpa->stmac, 6 );
     }
 
     if( memcmp( wpa->snonce, wpa->anonce, 32 ) < 0 ) {
@@ -225,7 +224,6 @@ calc_tkip_ppk( u_char *bytes, int caplen, u_char TK1[16], u_char key[16] )
     uint32_t IV32;
     uint16_t IV16;
     uint16_t PPK[6];
-	AP_info *cur = AP_list->cur;
 
     IV16 = MK16( bytes[0], bytes[2] );
 
@@ -234,9 +232,9 @@ calc_tkip_ppk( u_char *bytes, int caplen, u_char TK1[16], u_char key[16] )
 
     PPK[0] = LO16( IV32 );
     PPK[1] = HI16( IV32 );
-    PPK[2] = MK16( cur->sa[1], cur->sa[0] );
-    PPK[3] = MK16( cur->sa[3], cur->sa[2] );
-    PPK[4] = MK16( cur->sa[5], cur->sa[4] );
+    PPK[2] = MK16( wpa->stmac[1], wpa->stmac[0] );
+    PPK[3] = MK16( wpa->stmac[3], wpa->stmac[2] );
+    PPK[4] = MK16( wpa->stmac[5], wpa->stmac[4] );
 
     for( i = 0; i < 8; i++ )
     {
@@ -292,7 +290,7 @@ pre_encrypt( void *arg )
 {
 	int status;
 	stage_t *stage = ( stage_t * )arg;
-	AP_info *cur;
+	AP_info *cur = NULL;
 	u_char pmk[40];
 
 	while(1) {
@@ -313,36 +311,40 @@ pre_encrypt( void *arg )
 
 		if( frame != NULL ) {
 			status = pthread_mutex_lock( &AP_list->lock );
-			is_exist( ssid );
 			cur = AP_list->cur;
-			status = pthread_mutex_unlock( &AP_list->lock );
 
-//			if( WEP_ENCRYPT == cur->encrypt ) {
-//				u_char key[40];
-//
-//				merge_iv( frame->bytes, frame->len, key );	
-//				memcpy( frame->bytes, &( frame->bytes[4] ), frame->len -4 );
-//				wep_decrypt( frame->bytes, key,	
-//								frame->len - 4,
-//								IV_LEN + ( user->passwd_len ) / 2 );
-//
-//			} else if( WPA_ENCRYPT == cur->encrypt ) {
-//				
-//				wpa->valid_ptk = calc_ptk( pmk );
-//
-//				printf( "haha" );
-//				if( TKIP == wpa->keyver ) {
-//					decrypt_tkip( frame->bytes, frame->len, 
-//										wpa->ptk + 32 );		
-//					int i;
-//					for( i = 8; i < frame->len; i++ ) {
-//						printf( "%x ", frame->bytes[i] );
-//					}
-//				} else {
-//			//		decrypt_ccmp( frame->bytes, frame_len,
-//			//							wpa->ptk + 32 );
-//				}
-//			} 
+			status = pthread_mutex_unlock( &AP_list->lock );
+			if( WEP_ENCRYPT  == cur->encrypt ) {
+				u_char key[40];
+
+				merge_iv( frame->bytes, frame->len, key );	
+				memmove( frame->bytes, &( frame->bytes[4] ), 
+														frame->len -4 );
+				wep_decrypt( frame->bytes, key,	
+								frame->len - 4,
+								IV_LEN + ( user->passwd_len ) / 2 );
+
+				int i;
+				for( i = 0; i < frame->len - 4; i++ ) {
+					printf( "%x ", frame->bytes[i] );
+				}
+				printf( "\n\n" );
+
+			} else if( WPA_ENCRYPT == cur->encrypt ) {
+				
+				wpa->valid_ptk = calc_ptk( pmk );
+
+				if( TKIP == wpa->keyver ) {
+					if( !wpa->valid_ptk ) {
+						printf( "haha\n" );
+					}
+					decrypt_tkip( frame->bytes, frame->len, 
+										wpa->ptk + 32 );		
+				} else {
+  			//		decrypt_ccmp( frame->bytes, frame_len,
+  			//						wpa->ptk + 32 );
+				}
+			} 
 		}
 
 		stage->is_ready = 0;
