@@ -5,7 +5,7 @@ SRC = src/
 
 TARGET = wireless-defender
 OBJ = wireless-defender.o analyse.o wdcp.o server.o capture.o config.o \
-	  utils.o preprocess.o decrypt.o flow.o
+	  utils.o preprocess.o decrypt.o flow.o log.o
 
 .PHONY: debug dump offline all clean
 
@@ -40,6 +40,8 @@ utils.o: utils.c utils.h
 	$(CC) $(CFLAGS) utils.c
 flow.o: flow.c 
 	$(CC) $(CFLAGS) flow.c
+log.o: log.c log.h
+	$(CC) $(CFLAGS) log.c
 
 clean:
 	-rm *.o $(TARGET)
