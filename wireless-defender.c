@@ -77,13 +77,13 @@ main(int argc, char *argv[])
 //	WD_server_start();
 
 	// 初始化抓包模块
-	WD_capture_init(WD_analyse_test, 50, (u_char *)1);
+	WD_capture_init(WD_analyse_test, 0, (u_char *)1);
 	//启动预处理模块
 	WD_pipe_create(&prepline);	
 	// 启动抓包
 	WD_capture_start();
 	//
-	//show_ap_list();	
+	show_ap_list();	
 	// 关闭抓包模块
 	WD_capture_destory();
 	// 清理抓包模块
