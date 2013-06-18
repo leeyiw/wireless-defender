@@ -40,15 +40,17 @@ typedef struct WPA_info {
 	int eapol_size;
 	int keyver;
 	int valid_ptk;
+	pthread_mutex_t wpa_lock;
 } WPA_info_t;
 
 extern user_info_t *user; 
 extern WPA_info_t *wpa;
+extern u_char pmk[40];
 
 extern void decrypt_init();
 extern void merge_iv( u_char *bytes, int frame_len,	u_char key[40] );
+extern void calc_pmk( char *key, char *essid_pre, u_char pmk[40] ); 
 extern void wep_decrypt( u_char *data, u_char *key, int len, int keylen );
-extern void calc_pmk( char *key, char *essid_pre, u_char pmk[40] );
 extern int calc_ptk( u_char pmk[40] );
 extern void *pre_encrypt( void *arg );
 extern int calc_tkip_ppk( u_char *bytes, int caplen, u_char TK1[16], 

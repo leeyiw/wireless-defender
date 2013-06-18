@@ -5,6 +5,7 @@
 #include "flow.h"
 
 WPA_info_t *wpa = NULL;
+u_char pmk[40];
 
 const short TkipSbox[2][256]=
 {
@@ -82,6 +83,8 @@ void
 decrypt_init()
 {
 	wpa = ( WPA_info_t * )malloc( sizeof( WPA_info_t ) );	
+	memset( wpa->snonce, 0, 32 );
+	memset( wpa->anonce, 0, 32 );
 }
 
 void 
@@ -95,15 +98,6 @@ merge_iv( u_char *bytes, int frame_len,	u_char key[40] )
 	}
 }
 
-void
-wep_decrypt( u_char *data, u_char *key, int len, int keylen )
-{
-	RC4_KEY rc4_key;
-
-	RC4_set_key( &rc4_key, keylen, key );
-	RC4( &rc4_key, len, data, data );
-}
-
 void 
 calc_pmk( char *key, char *essid_pre, u_char pmk[40] ) 
 {
@@ -114,8 +108,8 @@ calc_pmk( char *key, char *essid_pre, u_char pmk[40] )
 	SHA_CTX ctx_opad;
 	SHA_CTX sha1_ctx;
 
-	memset( essid, 0, sizeof( essid ) );
-	memcpy( essid, essid_pre, strlen( essid_pre ) );
+	memset(essid, 0, sizeof(essid));
+	memcpy(essid, essid_pre, strlen(essid_pre));
 	slen = strlen( essid ) + 4;
 
 	/* setup the inner and outer contexts */
@@ -140,8 +134,8 @@ calc_pmk( char *key, char *essid_pre, u_char pmk[40] )
 	/* iterate HMAC-SHA1 over itself 8192 times */
 
 	essid[slen - 1] = '\1';
-	HMAC( EVP_sha1(), ( u_char * )key, strlen( key ), 
-				( u_char* )essid, slen, pmk, NULL );
+	HMAC( EVP_sha1(), ( u_char * )key, strlen(key), 
+					( u_char* )essid, slen, pmk, NULL);
 	memcpy( buffer, pmk, 20 );
 
 	for( i = 1; i < 4096; i++ ) {
@@ -159,8 +153,8 @@ calc_pmk( char *key, char *essid_pre, u_char pmk[40] )
 	}
 
 	essid[slen - 1] = '\2';
-	HMAC( EVP_sha1(), ( u_char * )key, strlen( key ), 
-					( u_char* )essid, slen, pmk+20, NULL );
+	HMAC( EVP_sha1(), ( u_char * )key, strlen(key), 
+					( u_char* )essid, slen, pmk+20, NULL);
 	memcpy( buffer, pmk + 20, 20 );
 
 	for( i = 1; i < 4096; i++ ) {
@@ -176,6 +170,16 @@ calc_pmk( char *key, char *essid_pre, u_char pmk[40] )
 			pmk[j + 20] ^= buffer[j];
 		}
 	}
+
+}
+
+void
+wep_decrypt( u_char *data, u_char *key, int len, int keylen )
+{
+	RC4_KEY rc4_key;
+
+	RC4_set_key( &rc4_key, keylen, key );
+	RC4( &rc4_key, len, data, data );
 }
 
 int
@@ -183,14 +187,8 @@ calc_ptk( u_char pmk[40] )
 {
 	int i;
 	u_char pke[100];
+	memset( pke, 0, sizeof( pke ) );
 	u_char mic[20];
-	char ssid[40] = {0};
-	char *passwd = "wufeishizhu.";
-
-	memcpy( ssid, AP_list->cur->ssid, strlen( AP_list->cur->ssid ) );
-	ssid[strlen(ssid)] = '\0';
-
-	calc_pmk( passwd, ssid, pmk );
 
     memcpy( pke, "Pairwise key expansion", 23 );
 
@@ -209,7 +207,7 @@ calc_ptk( u_char pmk[40] )
         memcpy( pke + 35, wpa->anonce, 32 );
         memcpy( pke + 67, wpa->snonce, 32 );
     }
-
+	
     for( i = 0; i < 4; i++ )
     {
         pke[99] = i;
@@ -222,6 +220,7 @@ calc_ptk( u_char pmk[40] )
     else
         HMAC(EVP_sha1(), wpa->ptk, 16, wpa->eapol, 
 										wpa->eapol_size, mic, NULL );
+
 
     return( memcmp( mic, wpa->keymic, 16 ) == 0 );
 }
@@ -298,7 +297,6 @@ void *
 pre_encrypt( void *arg )
 {
 	int status;
-	u_char pmk[40];
 	u_char key[40];
 	AP_info *cur = NULL;
 	frame_t *frame = NULL;
@@ -338,17 +336,18 @@ pre_encrypt( void *arg )
 				analyse_flow( frame );
 
 			} else if( WPA_ENCRYPT == cur->encrypt ) {
-				
-				wpa->valid_ptk = calc_ptk( pmk );
-
-				if( TKIP == wpa->keyver ) {
-
-					decrypt_tkip( frame->bytes, frame->len, 
-										wpa->ptk + 32 );		
-				} else {
-  			//		decrypt_ccmp( frame->bytes, frame_len,
-  			//						wpa->ptk + 32 );
-				}
+//				
+//				wpa->valid_ptk = calc_ptk( pmk );
+//				printf( "%d\n", wpa->valid_ptk );
+//
+//				if( TKIP == wpa->keyver ) {
+//
+//					decrypt_tkip( frame->bytes, frame->len, 
+//										wpa->ptk + 32 );		
+//				} else {
+//  			//		decrypt_ccmp( frame->bytes, frame_len,
+//  			//						wpa->ptk + 32 );
+//				}
 			} 
 		}
 

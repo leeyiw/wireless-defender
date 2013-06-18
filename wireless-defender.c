@@ -15,7 +15,7 @@
 time_t WD_start_time;
 
 user_info_t *user = NULL;
-u_char user_stmac[105] = { 0x8c, 0xa9, 0x82, 0x3c, 0xd8, 0x90 };
+u_char user_stmac[105] = { 0x84, 0x25, 0xdb, 0x3e, 0x3d, 0x30 };
 
 void
 user_config_init()
@@ -83,7 +83,7 @@ main(int argc, char *argv[])
 	// 启动抓包
 	WD_capture_start();
 	//
-	show_ap_list();	
+	//show_ap_list();	
 	// 关闭抓包模块
 	WD_capture_destory();
 	// 清理抓包模块

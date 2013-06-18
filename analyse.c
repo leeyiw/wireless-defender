@@ -164,6 +164,11 @@ eapol_cache( const u_char *bytes )
 int
 deal_eapol( const u_char *bytes )
 {	
+	char *essid = { "wfaye" };
+	char *passwd = { "wufeishizhu."}; 
+
+	calc_pmk( passwd, essid, pmk );
+
 	if( bytes[1] != TYPE_KEY && 
 		bytes[4] != EAPOL_WPA_KEY && 
 		bytes[4] != RSN ) {
@@ -191,7 +196,7 @@ deal_eapol( const u_char *bytes )
 		wpa->eapol_size = ( bytes[2] << 8 ) + bytes[3] + 4;
 		
         memcpy( wpa->keymic, &bytes[81], 16 );
-		memcpy( wpa->eapol, &bytes, wpa->eapol_size );
+		memcpy( wpa->eapol, bytes, wpa->eapol_size );
 		memset( wpa->eapol + 81, 0, 16 );
 
 		wpa->keyver = bytes[6] & KEY_VERSION;
@@ -206,13 +211,18 @@ deal_eapol( const u_char *bytes )
 			memcpy( wpa->anonce, &bytes[17], 32 );	
 		}
 
-		wpa->eapol_size = ( bytes[2] << 8 ) + bytes[3] + 4;
+		wpa->eapol_size = bytes[2] * 256 + bytes[3] + 4;
 		
         memcpy( wpa->keymic, &bytes[81], 16 );
-		memcpy( wpa->eapol, &bytes, wpa->eapol_size );
+		memcpy( wpa->eapol, bytes, wpa->eapol_size );
 		memset( wpa->eapol + 81, 0, 16 );
 
 		wpa->keyver = bytes[6] & KEY_VERSION;
+	}
+
+	wpa->valid_ptk = calc_ptk( pmk );
+	if( wpa->valid_ptk ) {
+		printf( "hello world\n" );
 	}
 
 	return 0;
@@ -278,9 +288,9 @@ deal_frame_info( void *arg )
 			//free( frame );
 			frame = NULL;
 		}
-		if( return_val >= 0 ) {
-			pipe_send( &( stage->next ), frame );
-		}
+//		if( return_val >= 0 ) {
+//			pipe_send( &( stage->next ), frame );
+//		}
 
 		stage->is_ready = 0;
 		stage->is_finished = 1;
@@ -456,6 +466,6 @@ deal_ssid( const u_char *bytes , int *frame_len )
 	AP_list->tail->ssid_len = bytes[1]; 
 	AP_list->tail->ssid = ( char * )malloc( bytes[1] + 1 ); 
 	
-	memcpy( AP_list->tail->ssid, &bytes[2],bytes [1] );
+	memcpy( AP_list->tail->ssid, &bytes[2], bytes[1] );
 	AP_list->tail->ssid[bytes[1]] = '\0';
 }
