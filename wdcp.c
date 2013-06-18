@@ -11,6 +11,7 @@
 #include "server.h"
 #include "utils.h"
 #include "analyse.h"
+#include "log.h"
 
 extern AP_list_t *AP_list;
 
@@ -68,6 +69,9 @@ WD_wdcp_build_connection(int fd)
 	WD_wdcp_packet_write_u32(&p, SEC_TYPE_STANDARD);
 	WD_wdcp_send_pkt(fd, &p);
 	WD_wdcp_del_pkt(&p);
+
+	WD_log_info("build connection with client success");
+
 	return WDCP_CONNECTION_SUCCESS;
 
 fail:
@@ -77,6 +81,9 @@ fail:
 	WD_wdcp_packet_write_u32(&p, FAILED_PROTOCOL_ERR);
 	WD_wdcp_send_pkt(fd, &p);
 	WD_wdcp_del_pkt(&p);
+
+	WD_log_info("build connection with client fail");
+
 	return WDCP_CONNECTION_FAIL;
 }
 
@@ -117,6 +124,9 @@ WD_wdcp_authenticate(int fd)
 	WD_wdcp_packet_write_u8(&p, AUTH_RSP_PKT);
 	WD_wdcp_send_pkt(fd, &p);
 	WD_wdcp_del_pkt(&p);
+
+	WD_log_info("client authentication success");
+
 	return WDCP_AUTHENTICATE_SUCCESS;
 
 fail:
@@ -126,6 +136,9 @@ fail:
 	WD_wdcp_packet_write_u32(&p, failure_code);
 	WD_wdcp_send_pkt(fd, &p);
 	WD_wdcp_del_pkt(&p);
+
+	WD_log_info("client authentication fail");
+
 	return WDCP_AUTHENTICATE_FAIL;
 }
 
@@ -212,6 +225,10 @@ WD_wdcp_req_basic_info(int fd, struct packet *p)
 {
 	WD_wdcp_rst_pkt(p);
 
+	// 写入数据响应头部
+	WD_wdcp_packet_write_u8(DATA_RSP_PKT);
+	WD_wdcp_packet_write_u8(REQ_TYPE_BASIC_INFO);
+
 	// 写入运行时间
 	WD_wdcp_packet_write_u64(p, time(NULL) - WD_start_time);
 
@@ -230,6 +247,10 @@ WD_wdcp_req_ap_list(int fd, struct packet *p)
 
 	WD_wdcp_rst_pkt(p);
 
+	// 写入数据响应头部
+	WD_wdcp_packet_write_u8(DATA_RSP_PKT);
+	WD_wdcp_packet_write_u8(REQ_TYPE_AP_LIST);
+
 	// 记录AP个数的偏移量
 	p_n_ap = p->p;
 	WD_wdcp_packet_write_u8(p, 0);
@@ -237,21 +258,21 @@ WD_wdcp_req_ap_list(int fd, struct packet *p)
 	// 将AP列表加锁
 	ret = pthread_mutex_lock(&AP_list->lock);
 	if(ret != 0) {
-		err_exit("lock AP_list error");
+		WD_log_error("lock AP_list error");
 	}
 
 	// 循环写入AP信息
 	for(n_ap = 0, a = AP_list->head; a != NULL; n_ap++, a = a->next) {
-		uint8_t ssid_len;
-		ssid_len = strlen(a->ssid);
-		WD_wdcp_packet_write_u8(p, ssid_len);
-		WD_wdcp_packet_write_n(p, a->ssid, ssid_len);
+		WD_wdcp_packet_write_u8(p, a->ssid_len);
+		WD_wdcp_packet_write_n(p, a->ssid, a->ssid_len);
+		WD_wdcp_packet_write_u8(p, a->encrypt);
+		WD_wdcp_packet_write_n(p, a->bssid, size_t(a->bssid));
 	}
 
 	// 将AP列表解锁
 	ret = pthread_mutex_unlock(&AP_list->lock);
 	if(ret != 0) {
-		err_exit("unlock AP_list error");
+		WD_log_error("unlock AP_list error");
 	}
 
 	// 写入AP个数

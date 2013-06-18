@@ -8,6 +8,7 @@
 
 #include "capture.h"
 #include "config.h"
+#include "log.h"
 
 static pcap_t *device;
 static char errbuf[PCAP_ERRBUF_SIZE];
@@ -106,6 +107,8 @@ WD_capture_start()
 {
 	int ret;
 
+	WD_log_info("capture started");
+
 #ifdef WD_DUMP
 	ret = pcap_loop(device, capture_cnt, pcap_dump, (u_char *)dump);
 #else
@@ -113,11 +116,11 @@ WD_capture_start()
 		capture_callback_arg);
 #endif
 	if(ret == 0) {
-		user_info("capture count exhausted");
+		WD_log_info("capture finish");
 	} else if(ret == -2) {
-		user_info("capture was breaked");
+		WD_log_info("capture was breaked");
 	} else if(ret == -1) {
-		pcap_perror(device, "capture error");
+		WD_log_info("capture packets error: %s", pcap_geterr(device));
 	}
 }
 

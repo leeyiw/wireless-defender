@@ -10,6 +10,7 @@
 #include "preprocess.h"
 #include "decrypt.h"
 #include "flow.h"
+#include "log.h"
 
 /* 起始运行时间 */
 time_t WD_start_time;
@@ -73,24 +74,31 @@ main(int argc, char *argv[])
 
 	WD_init();
 
+	// 初始化日志模块
+	WD_log_init();
+
+	// 启动预处理模块
+	WD_pipe_create(&prepline);	
+
 	// 启动服务器模块
-//	WD_server_start();
+	WD_server_start();
 
 	// 初始化抓包模块
 	WD_capture_init(WD_analyse_test, 0, (u_char *)1);
-	//启动预处理模块
-	WD_pipe_create(&prepline);	
 	// 启动抓包
 	WD_capture_start();
-	//
+
 	show_ap_list();	
+
+	// 等待服务器模块结束
+	WD_server_wait();
+
 	// 关闭抓包模块
 	WD_capture_destory();
+
 	// 清理抓包模块
 	WD_destory();
 
-	///* 等待服务器模块结束 */
-//	WD_server_wait();
 	
 	pthread_exit( NULL );
 	return EXIT_SUCCESS;
