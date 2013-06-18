@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <pthread.h>
 
+#include "log.h"
 #include "server.h"
 #include "config.h"
 #include "wdcp.h"
@@ -35,13 +36,12 @@ WD_server_start()
 	// 创建监听描述符
 	listen_fd = socket(AF_INET, SOCK_STREAM, 0);
 	if(-1 == listen_fd) {
-		err_exit("server open socket error");
+		WD_log_fatal("server open socket error");
 	}
 	// 使用ioctl取网卡地址
 	strncpy(ifr.ifr_name, g_server_interface, IFNAMSIZ);
 	if(-1 == ioctl(listen_fd, SIOCGIFADDR, &ifr)) {
-		err_exit1("get interface '%s' address error",
-			g_server_interface);
+		WD_log_fatal("get interface '%s' address error", g_server_interface);
 	}
 	// 设置网卡地址
 	listen_addr = (struct sockaddr_in *)&ifr.ifr_addr;
@@ -50,14 +50,16 @@ WD_server_start()
 	// bind网卡地址
 	if(-1 == bind(listen_fd, (struct sockaddr *)listen_addr,
 		sizeof(struct sockaddr_in))) {
-		err_exit1("bind interface '%s' error", g_server_interface);
+		WD_log_fatal("bind interface '%s' error", g_server_interface);
 	}
 
 	// 创建server模块线程
 	ret = pthread_create(&WD_server_thread_id, NULL, WD_server_main_loop, NULL);
 	if(ret != 0) {
-		err_exit("create server thread error");
+		WD_log_fatal("create server thread error");
 	}
+
+	WD_log_info("server started");
 
 	return;
 }
@@ -73,7 +75,7 @@ WD_server_wait()
 
 	ret = pthread_join(WD_server_thread_id, &retval);
 	if(ret != 0) {
-		err_exit("join server thread error");
+		WD_log_fatal("join server thread error");
 	}
 }
 
@@ -121,12 +123,10 @@ WD_server_handle_connection(void *arg)
 	if(WDCP_CONNECTION_SUCCESS != WD_wdcp_build_connection(fd)) {
 		return NULL;
 	}
-	printf("build connection success\n");
 	// 如果应用层建立连接成功则进行认证，如果验证失败则返回
 	if(WDCP_AUTHENTICATE_SUCCESS != WD_wdcp_authenticate(fd)) {
 		return NULL;
 	}
-	printf("authentication success\n");
 	// 进行数据通信
 	while(WDCP_PROCESS_SUCCESS != WD_wdcp_process(fd)) {
 		;

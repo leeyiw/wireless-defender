@@ -40,9 +40,11 @@
 #define WDCP_PROCESS_FAIL			0
 
 #define DATA_REQ_PKT				0x01
+#define DATA_RSP_PKT				0x02
 
 #define REQ_TYPE_BASIC_INFO			0x00
 #define REQ_TYPE_AP_LIST			0x01
+#define REQ_TYPE_FAKE_AP			0x02
 
 
 struct packet {
