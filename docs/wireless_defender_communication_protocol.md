@@ -302,3 +302,5 @@ encrypt_type (1 byte): AP的加密方式。取值如下：
 		<td>&#37319;&#29992;WPA&#21152;&#23494;</td>
 	</tr>
 </table>
+
+bssid (6 bytes): AP的BSSID。
