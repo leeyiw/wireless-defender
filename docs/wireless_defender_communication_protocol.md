@@ -20,6 +20,7 @@
  - [4.3 设备基本信息数据包][设备基本信息数据包]
  - [4.4 AP列表数据包][AP列表数据包]
      + [4.4.1][AP结构定义][AP结构定义]
+ - [4.5 FakeAP数据包][FakeAP数据包]
 
 [协议简介]: #introduction  "协议简介"
 [通用规范]: #common-specification  "通用规范"
@@ -43,6 +44,7 @@
 [设备基本信息数据包]: #basic-info-packet "设备基本信息数据包"
 [AP列表数据包]: #ap-list-packet "AP列表数据包"
 [AP结构定义]: #ap-structure-def "AP结构定义"
+[FakeAP数据包]: #fake-ap-packet "FakeAP数据包"
 
 
 <a name="introduction"></a>
@@ -248,6 +250,14 @@ request_type (1 byte): 一字节无符号整形。请求的数据类型，取值
 		<td>0x01</td>
 		<td>&#33719;&#21462;&#24403;&#21069;&#35774;&#22791;&#26816;&#27979;&#21040;&#30340;AP&#21015;&#34920;</td>
 	</tr>
+	<tr>
+		<td>REQ_TYPE_FAKE_AP</td>
+		<td>0x02</td>
+		<td>&#33719;&#21462;&#24403;&#21069;&#23384;&#22312;FakeAP&#23041;&#32961;&#30340;AP&#30340;&#20449;&#24687;</td>
+	</tr>
+	<tr>
+		<td></td>
+	</tr>
 </table>
 
 <a name="data-response-packet-header"></a>
@@ -304,3 +314,11 @@ encrypt_type (1 byte): AP的加密方式。取值如下：
 </table>
 
 bssid (6 bytes): AP的BSSID。
+
+<a name="fake-ap-packet"></a>
+### 4.5 FakeAP数据包
+FakeAP数据包是服务器在收到客户端的请求类型为REQ_TYPE_FAKE_AP的数据请求数据包后，向客户端返回存在FakeAP威胁的AP的信息的数据包。数据包内容如下：
+
+n_ap (1 byte): 1字节无符号整形，AP列表中AP结构的个数。
+
+ap_list (variable): 一个变长的AP结构体列表。AP结构体的个数在 *n_ap* 字段中给出。AP结构体的内容参见[AP结构定义][]。
