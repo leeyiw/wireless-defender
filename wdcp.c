@@ -20,6 +20,7 @@ static int WD_wdcp_check_login(const char *username, uint8_t username_len,
 static int WD_wdcp_process_data_req(int fd, struct packet *p);
 static int WD_wdcp_req_basic_info(int fd, struct packet *p);
 static int WD_wdcp_req_ap_list(int fd, struct packet *p);
+static int WD_wdcp_req_fake_ap(int fd, struct packet *p);
 
 static ssize_t WD_wdcp_recv(int sockfd, void *buf, size_t len, int flags);
 static ssize_t WD_wdcp_send(int sockfd, void *buf, size_t len, int flags);
@@ -32,6 +33,7 @@ static void WD_wdcp_packet_write_n(struct packet *p, void *data, size_t len);
 static void WD_wdcp_packet_write_u8(struct packet *p, uint8_t data);
 static void WD_wdcp_packet_write_u32(struct packet *p, uint32_t data);
 static void WD_wdcp_packet_write_u64(struct packet *p, uint64_t data);
+static void WD_wdcp_packet_write_ap_list(struct packet *p, AP_list_t *ap_list);
 static void WD_wdcp_packet_read_n(struct packet *p, void *data, size_t len);
 static void WD_wdcp_packet_read_u8(struct packet *p, uint8_t *data);
 static void WD_wdcp_packet_read_u32(struct packet *p, uint32_t *data);
@@ -213,6 +215,9 @@ WD_wdcp_process_data_req(int fd, struct packet *p)
 	case REQ_TYPE_AP_LIST:
 		WD_wdcp_req_ap_list(fd, p);
 		break;
+	case REQ_TYPE_FAKE_AP:
+		WD_wdcp_req_fake_ap(fd, p);
+		break;
 	default:
 		break;
 	}
@@ -226,8 +231,8 @@ WD_wdcp_req_basic_info(int fd, struct packet *p)
 	WD_wdcp_rst_pkt(p);
 
 	// 写入数据响应头部
-	WD_wdcp_packet_write_u8(DATA_RSP_PKT);
-	WD_wdcp_packet_write_u8(REQ_TYPE_BASIC_INFO);
+	WD_wdcp_packet_write_u8(p, DATA_RSP_PKT);
+	WD_wdcp_packet_write_u8(p, REQ_TYPE_BASIC_INFO);
 
 	// 写入运行时间
 	WD_wdcp_packet_write_u64(p, time(NULL) - WD_start_time);
@@ -241,45 +246,32 @@ WD_wdcp_req_basic_info(int fd, struct packet *p)
 static int
 WD_wdcp_req_ap_list(int fd, struct packet *p)
 {
-	int n_ap, ret;
-	uint8_t *p_n_ap, *tmp;
-	AP_info *a;
-
 	WD_wdcp_rst_pkt(p);
 
 	// 写入数据响应头部
-	WD_wdcp_packet_write_u8(DATA_RSP_PKT);
-	WD_wdcp_packet_write_u8(REQ_TYPE_AP_LIST);
+	WD_wdcp_packet_write_u8(p, DATA_RSP_PKT);
+	WD_wdcp_packet_write_u8(p, REQ_TYPE_AP_LIST);
 
-	// 记录AP个数的偏移量
-	p_n_ap = p->p;
-	WD_wdcp_packet_write_u8(p, 0);
+	// 写入AP列表
+	WD_wdcp_packet_write_ap_list(p, AP_list);
 	
-	// 将AP列表加锁
-	ret = pthread_mutex_lock(&AP_list->lock);
-	if(ret != 0) {
-		WD_log_error("lock AP_list error");
-	}
+	// 发送数据包
+	WD_wdcp_send_pkt(fd, p);
 
-	// 循环写入AP信息
-	for(n_ap = 0, a = AP_list->head; a != NULL; n_ap++, a = a->next) {
-		WD_wdcp_packet_write_u8(p, a->ssid_len);
-		WD_wdcp_packet_write_n(p, a->ssid, a->ssid_len);
-		WD_wdcp_packet_write_u8(p, a->encrypt);
-		WD_wdcp_packet_write_n(p, a->bssid, size_t(a->bssid));
-	}
+	return WDCP_PROCESS_SUCCESS;
+}
 
-	// 将AP列表解锁
-	ret = pthread_mutex_unlock(&AP_list->lock);
-	if(ret != 0) {
-		WD_log_error("unlock AP_list error");
-	}
+static int
+WD_wdcp_req_fake_ap(int fd, struct packet *p)
+{
+	WD_wdcp_rst_pkt(p);
 
-	// 写入AP个数
-	tmp = p->p;
-	p->p = p_n_ap;
-	WD_wdcp_packet_write_u8(p, n_ap);
-	p->p = tmp;
+	// 写入数据响应头部
+	WD_wdcp_packet_write_u8(p, DATA_REQ_PKT);
+	WD_wdcp_packet_write_u8(p, REQ_TYPE_FAKE_AP);
+
+	// 写入AP列表
+	WD_wdcp_packet_write_ap_list(p, AP_list);
 	
 	// 发送数据包
 	WD_wdcp_send_pkt(fd, p);
@@ -372,6 +364,44 @@ static void
 WD_wdcp_packet_write_u64(struct packet *p, uint64_t data)
 {
 	WD_wdcp_packet_write_n(p, &data, sizeof(data));
+}
+
+static void
+WD_wdcp_packet_write_ap_list(struct packet *p, AP_list_t *ap_list)
+{
+	int n_ap = 0, ret = 0;
+	uint8_t *p_n_ap = NULL, *tmp = NULL;
+	AP_info *a = NULL;
+
+	// 记录AP个数的偏移量
+	p_n_ap = p->p;
+	WD_wdcp_packet_write_u8(p, 0);
+	
+	// 将AP列表加锁
+	ret = pthread_mutex_lock(&ap_list->lock);
+	if(ret != 0) {
+		WD_log_error("lock AP list error");
+	}
+
+	// 循环写入AP信息
+	for(n_ap = 0, a = ap_list->head; a != NULL; n_ap++, a = a->next) {
+		WD_wdcp_packet_write_u8(p, a->ssid_len);
+		WD_wdcp_packet_write_n(p, a->ssid, a->ssid_len);
+		WD_wdcp_packet_write_u8(p, a->encrypt);
+		WD_wdcp_packet_write_n(p, a->bssid, sizeof(a->bssid));
+	}
+
+	// 将AP列表解锁
+	ret = pthread_mutex_unlock(&ap_list->lock);
+	if(ret != 0) {
+		WD_log_error("unlock AP list error");
+	}
+
+	// 写入AP个数
+	tmp = p->p;
+	p->p = p_n_ap;
+	WD_wdcp_packet_write_u8(p, n_ap);
+	p->p = tmp;
 }
 
 static void

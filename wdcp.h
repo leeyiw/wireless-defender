@@ -44,6 +44,7 @@
 
 #define REQ_TYPE_BASIC_INFO			0x00
 #define REQ_TYPE_AP_LIST			0x01
+#define REQ_TYPE_FAKE_AP			0x02
 
 
 struct packet {
