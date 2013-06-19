@@ -36,6 +36,7 @@
 #define FAILED_AUTH_CHECK			0x00000002
 
 /* 通信过程中的宏定义 */
+#define WDCP_PROCESS_END			2
 #define WDCP_PROCESS_SUCCESS		1
 #define WDCP_PROCESS_FAIL			0
 

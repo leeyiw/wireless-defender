@@ -154,6 +154,10 @@ WD_wdcp_process(int fd)
 	WD_wdcp_new_pkt(&p);
 	// 接收数据通信数据包
 	WD_wdcp_recv_pkt(fd, &p);
+	if(p.len == 0) {
+		result = WDCP_PROCESS_END;
+		goto ret;
+	}
 	// 取出数据包类型
 	WD_wdcp_packet_read_u8(&p, &type);
 	// 根据不同类型，进行不同处理
@@ -165,6 +169,8 @@ WD_wdcp_process(int fd)
 		result = WDCP_PROCESS_FAIL;
 		break;
 	}
+
+ret:
 	
 	WD_wdcp_del_pkt(&p);
 
@@ -261,6 +267,8 @@ WD_wdcp_req_ap_list(int fd, struct packet *p)
 	// 发送数据包
 	WD_wdcp_send_pkt(fd, p);
 
+	WD_log_info("client request AP list");
+
 	return WDCP_PROCESS_SUCCESS;
 }
 
@@ -348,7 +356,9 @@ WD_wdcp_recv(int sockfd, void *buf, size_t len, int flags)
 
 	n = recv(sockfd, buf, len, 0);
 	if(n == -1) {
-		err_exit("receive data from client error");
+		WD_log_error("receive data from client error: %s", ERRSTR);
+	} else if(n == 0) {
+		WD_log_info("client orderly shutdown");
 	}
 
 	return n;
