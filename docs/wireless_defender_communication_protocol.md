@@ -21,6 +21,7 @@
  - [4.4 AP列表数据包][AP列表数据包]
      + [4.4.1][AP结构定义][AP结构定义]
  - [4.5 FakeAP数据包][FakeAP数据包]
+ - [4.6 流量统计数据包][流量统计数据包]
 
 [协议简介]: #introduction  "协议简介"
 [通用规范]: #common-specification  "通用规范"
@@ -45,6 +46,7 @@
 [AP列表数据包]: #ap-list-packet "AP列表数据包"
 [AP结构定义]: #ap-structure-def "AP结构定义"
 [FakeAP数据包]: #fake-ap-packet "FakeAP数据包"
+[流量统计数据包]: #flow-statistics-packet "流量统计数据包"
 
 
 <a name="introduction"></a>
@@ -255,6 +257,11 @@ request_type (1 byte): 一字节无符号整形。请求的数据类型，取值
 		<td>0x02</td>
 		<td>&#33719;&#21462;&#24403;&#21069;&#23384;&#22312;FakeAP&#23041;&#32961;&#30340;AP&#30340;&#20449;&#24687;</td>
 	</tr>
+	<tr>
+		<td>REQ_TYPE_FLOW_STATISTICS</td>
+		<td>0x03</td>
+		<td>&#33719;&#21462;&#24403;&#21069;&#35774;&#22791;&#32479;&#35745;&#30340;&#25968;&#25454;&#27969;&#37327;&#20449;&#24687;</td>
+	</tr>
 </table>
 
 <a name="data-response-packet-header"></a>
@@ -319,3 +326,7 @@ FakeAP数据包是服务器在收到客户端的请求类型为REQ_TYPE_FAKE_AP�
 n_ap (1 byte): 1字节无符号整形，AP列表中AP结构的个数。
 
 ap_list (variable): 一个变长的AP结构体列表。AP结构体的个数在 *n_ap* 字段中给出。AP结构体的内容参见[AP结构定义][]。
+
+<a name="flow-statistics-packet"></a>
+### 4.6 流量统计数据包
+流量统计数据包是服务器在收到客户端的请求类型为REQ_TYPE_FLOW_STATISTICS的数据请求数据包后，向客户端返回设备统计到的数据流量信息的数据包。数据包内容如下：
