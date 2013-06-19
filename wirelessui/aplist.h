@@ -26,5 +26,6 @@ private slots:
     void make_model();
     void get_ap_list();
 
+    void on_ap_table_doubleClicked(const QModelIndex &index);
 };
 #endif // APLIST_H

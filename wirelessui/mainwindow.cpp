@@ -63,11 +63,11 @@ void MainWindow::initData()
     setAttribute(Qt::WA_TranslucentBackground);
     ui->stackedWidget->addWidget(&list);
 
-    anticrack=new QLabel(this);
-    anticrack->setText("this is anticrack");
+   // anticrack=new QLabel(this);
+   // anticrack->setText("this is anticrack");
 
     ui->stackedWidget->addWidget(&arp_tab);
-    ui->stackedWidget->addWidget(anticrack);
+    ui->stackedWidget->addWidget(&anti);
     ui->stackedWidget->addWidget(&fake);
 
     ui->stackedWidget->addWidget(&network);

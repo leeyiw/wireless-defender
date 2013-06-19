@@ -18,20 +18,23 @@ SOURCES += main.cpp\
     connect.cpp \
     aplist.cpp \
     arp.cpp \
-    fakeap.cpp
+    fakeap.cpp \
+    anti_crack.cpp
 
 HEADERS  += mainwindow.h \
     connect.h \
     aplist.h \
     arp.h \
     network.h \
-    fakeap.h
+    fakeap.h \
+    anti_crack.h
 
 FORMS    += mainwindow.ui \
     Connect.ui \
     aplist.ui \
     arp.ui \
-    fakeap.ui
+    fakeap.ui \
+    anti_crack.ui
 
 RESOURCES += \
     res.qrc

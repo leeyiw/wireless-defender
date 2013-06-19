@@ -213,3 +213,19 @@ void aplist::get_ap_list()
     {
         delete ui;
     }
+
+void aplist::on_ap_table_doubleClicked(const QModelIndex &index)
+{
+    class MyMessageBox : public QMessageBox {
+    protected:
+    void showEvent(QShowEvent* event) {
+    QMessageBox::showEvent(event);
+    setFixedSize(640, 480);
+    }
+    };
+    QMessageBox my;
+    my.setWindowTitle(tr("流量"));
+    my.setInformativeText("HTTP : 10KB/45KB\nSMTP : 12KB/81KB\nSSH : 20/31KB\nFTP : 300/298KB");
+    my.exec();
+
+}
