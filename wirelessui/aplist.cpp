@@ -9,7 +9,7 @@ typedef struct AP_list {
     quint8 ssid_len;
     QString ssid;
     quint8 encrypt_type;
-    char bssid[6];
+    unsigned char bssid[6];
 
 } AP_list_t;
 AP_list_t ap_li[200];
@@ -44,9 +44,9 @@ void aplist::make_model()
     //ui->student_tableview
     ui->ap_table->setModel(ap_model);
     //设置表格的各列的宽度值
-    ui->ap_table->setColumnWidth(0,270);
-    ui->ap_table->setColumnWidth(1,100);
-    ui->ap_table->setColumnWidth(2,100);
+    ui->ap_table->setColumnWidth(0,200);
+    ui->ap_table->setColumnWidth(1,150);
+    ui->ap_table->setColumnWidth(2,120);
     //隐藏行头
     ui->ap_table->verticalHeader()->hide();
     //设置选中时为整行选中
@@ -141,7 +141,7 @@ void aplist::get_ap_list()
                 ssid_buf[ap_li[i].ssid_len] = '\0';
                 ap_li[i].ssid = QString(ssid_buf);
                 in>>ap_li[i].encrypt_type;
-                in.readRawData(ap_li[i].bssid, sizeof(ap_li[i].bssid));
+                in.readRawData((char *)ap_li[i].bssid, sizeof(ap_li[i].bssid));
             }
             show_data();
         }
@@ -149,27 +149,30 @@ void aplist::get_ap_list()
     connect(&tcpSocket,SIGNAL(readyRead()),this,SLOT(show_data()));
 }
 
-    void aplist::show_data()
+   void aplist::show_data()
     {
-
-
         for(int i=0;i<n_ap;i++)
         {
-
+            char bssid_buf[256];
             ap_model->setItem(i, 0, new QStandardItem(ap_li[i].ssid));
-            ap_model->setItem(i, 1, new QStandardItem(ap_li[i].bssid));
-            if(ap_li[i].encrypt_type==0x00)
-            {
+            sprintf(bssid_buf, "%2.2x:%2.2x:%2.2x:%2.2x:%2.2x:%2.2x", ap_li[i].bssid[0],
+                    ap_li[i].bssid[1], ap_li[i].bssid[2],
+                    ap_li[i].bssid[3], ap_li[i].bssid[4],
+                    ap_li[i].bssid[5]);
+            ap_model->setItem(i, 1, new QStandardItem(bssid_buf));
+            switch(ap_li[i].encrypt_type) {
+            case 0x00:
                 ap_model->setItem(i, 2, new QStandardItem("未加密"));
-            }
-            else if (ap_li[i].encrypt_type==0x01)
-            {
-                ap_model->setItem(i, 2, new QStandardItem("采用WEP加密"));
-            }
-            else if (ap_li[i].encrypt_type==0x02)
-
-            {
-                ap_model->setItem(i, 2, new QStandardItem("采用WPA加密"));
+                break;
+            case 0x01:
+                ap_model->setItem(i, 2, new QStandardItem("WEP"));
+                break;
+            case 0x02:
+                ap_model->setItem(i, 2, new QStandardItem("WPA"));
+                break;
+            default:
+                ap_model->setItem(i, 2, new QStandardItem("未知"));
+                break;
             }
             ap_model->item(i,0)->setTextAlignment(Qt::AlignCenter);
             ap_model->item(i, 0)->setFont( QFont( "Times", 10, QFont::Black ) );
