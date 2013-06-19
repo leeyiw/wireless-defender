@@ -17,39 +17,54 @@
    <property name="geometry">
     <rect>
      <x>190</x>
-     <y>170</y>
-     <width>54</width>
-     <height>21</height>
+     <y>165</y>
+     <width>60</width>
+     <height>30</height>
     </rect>
    </property>
+   <property name="font">
+    <font>
+     <pointsize>12</pointsize>
+    </font>
+   </property>
    <property name="text">
-    <string>Server</string>
+    <string>设备IP</string>
    </property>
   </widget>
   <widget class="QLabel" name="label_2">
    <property name="geometry">
     <rect>
      <x>190</x>
-     <y>230</y>
-     <width>54</width>
-     <height>12</height>
+     <y>225</y>
+     <width>60</width>
+     <height>30</height>
     </rect>
    </property>
+   <property name="font">
+    <font>
+     <pointsize>12</pointsize>
+    </font>
+   </property>
    <property name="text">
-    <string>Username</string>
+    <string>用户名</string>
    </property>
   </widget>
   <widget class="QLabel" name="label_3">
    <property name="geometry">
     <rect>
      <x>190</x>
-     <y>290</y>
-     <width>54</width>
-     <height>12</height>
+     <y>285</y>
+     <width>60</width>
+     <height>30</height>
     </rect>
    </property>
+   <property name="font">
+    <font>
+     <pointsize>12</pointsize>
+    </font>
+   </property>
    <property name="text">
-    <string>Password</string>
+    <string>密码</string>
    </property>
   </widget>
   <widget class="QPushButton" name="ConnectButton">
@@ -61,8 +76,13 @@
      <height>71</height>
     </rect>
    </property>
+   <property name="font">
+    <font>
+     <pointsize>12</pointsize>
+    </font>
+   </property>
    <property name="text">
-    <string>Connect</string>
+    <string>连接设备</string>
    </property>
   </widget>
   <widget class="QPushButton" name="LoginButton">
@@ -77,11 +97,16 @@
      <height>71</height>
     </rect>
    </property>
+   <property name="font">
+    <font>
+     <pointsize>12</pointsize>
+    </font>
+   </property>
    <property name="focusPolicy">
     <enum>Qt::StrongFocus</enum>
    </property>
    <property name="text">
-    <string>Login</string>
+    <string>管理登陆</string>
    </property>
   </widget>
   <widget class="QLineEdit" name="hostLineEdit">

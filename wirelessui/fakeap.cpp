@@ -65,6 +65,7 @@ void fakeap::get_fake_list()
     char ssid_buf[512] = {0};
     in.setByteOrder(QDataStream::LittleEndian);
     in>>type>>request_type>>n_fake;
+    n_fake = 1;
     ui->fake_num->display(n_fake);
     if(type!=0x02)
     {
@@ -74,7 +75,7 @@ void fakeap::get_fake_list()
     else if(type==0x02)
     {
         in.setByteOrder(QDataStream::LittleEndian);
-        if(request_type==0x01)
+        if(request_type==0x02)
         {
             for(int i=0;i<n_fake;i++)
             {

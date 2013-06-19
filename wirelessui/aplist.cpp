@@ -37,18 +37,18 @@ void aplist::get_veriyed()
 
 void aplist::make_model()
 {
-    ap_model->setHorizontalHeaderItem(0, new QStandardItem(QObject::tr("ssid")));
-    ap_model->setHorizontalHeaderItem(1, new QStandardItem(QObject::tr("bssid")));
+    ap_model->setHorizontalHeaderItem(0, new QStandardItem(QObject::tr("SSID")));
+    ap_model->setHorizontalHeaderItem(1, new QStandardItem(QObject::tr("BSSID")));
     ap_model->setHorizontalHeaderItem(2, new QStandardItem(QObject::tr("加密方式")));
-     ap_model->setHorizontalHeaderItem(3, new QStandardItem(QObject::tr("流量统计")));
+    ap_model->setHorizontalHeaderItem(3, new QStandardItem(QObject::tr("流量统计")));
     //利用setModel()方法将数据模型与QTableView绑定
     //ui->student_tableview
     ui->ap_table->setModel(ap_model);
     //设置表格的各列的宽度值
-     ui->ap_table->setColumnWidth(0,200);
-      ui->ap_table->setColumnWidth(1,150);
-      ui->ap_table->setColumnWidth(2,150);
-      ui->ap_table->setColumnWidth(3,100);
+    ui->ap_table->setColumnWidth(0,200);
+    ui->ap_table->setColumnWidth(1,150);
+    ui->ap_table->setColumnWidth(2,150);
+    ui->ap_table->setColumnWidth(3,100);
     //隐藏行头
     ui->ap_table->verticalHeader()->hide();
     //设置选中时为整行选中
@@ -60,6 +60,9 @@ void aplist::make_model()
 }
 void  aplist::require_ap_list()
 {
+
+  // tcpSocket.connectToHost(host_address,9387);
+    //tcpSocket.connectToHost("127.0.0.1",9387);
     QByteArray block;
     quint8 type = 0x01;
     quint8 request_type = 0x01;
@@ -70,7 +73,50 @@ void  aplist::require_ap_list()
     connect(&tcpSocket,SIGNAL(readyRead()),this,SLOT(get_ap_list()));
 }
 
+/*void aplist::get_ap_list()
+{
+    QDataStream in(&tcpSocket);
+    quint8 type;
+    quint8 request_type;
+    in.setByteOrder(QDataStream::LittleEndian);
+    in>>type>>request_type>>n_ap;;
 
+    if(type!=0x02)
+    {
+        tcpSocket.close();
+        //error();
+    }
+    if(type==0x02)
+    {
+        //QMessageBox::about(NULL, "1", " re_type_0x02");
+        if(request_type==0x01)
+        {
+            //QMessageBox::about(NULL, "2", " re_type_0x01");
+            connect(&tcpSocket,SIGNAL(readyRead()),this,SLOT(get_ap_num()));
+        }
+        else
+        {
+            tcpSocket.close();
+            //           error();
+        }
+    }
+    disconnect(&tcpSocket,SIGNAL(readyRead()),this,SLOT(get_head()));
+}*/
+
+/*void aplist::get_ap_num()
+{
+
+    QDataStream in(&tcpSocket);
+    in.setByteOrder(QDataStream::LittleEndian);
+    if(tcpSocket.bytesAvailable()==1)
+    {
+        in>>n_ap;
+    }
+    ui->ap_num->display(n_ap);
+    disconnect(&tcpSocket,SIGNAL(readyRead()),this,SLOT(get_ap_num()));
+    connect(&tcpSocket,SIGNAL(readyRead()),this,SLOT(get_ap_list()));
+
+}*/
 
 void aplist::get_ap_list()
 {
@@ -80,7 +126,6 @@ void aplist::get_ap_list()
     char ssid_buf[512] = {0};
     in.setByteOrder(QDataStream::LittleEndian);
     in>>type>>request_type>>n_ap;
-    ui->ap_num->display(n_ap);
     if(type!=0x02)
     {
         tcpSocket.close();
@@ -111,12 +156,20 @@ void aplist::get_ap_list()
         for(int i=0;i<n_ap;i++)
         {
             char bssid_buf[256];
+            /* SSID */
             ap_model->setItem(i, 0, new QStandardItem(ap_li[i].ssid));
+            ap_model->item(i,0)->setTextAlignment(Qt::AlignCenter);
+            ap_model->item(i, 0)->setFont( QFont( "Times", 10, QFont::Black ) );
+
+            /* BSSID */
             sprintf(bssid_buf, "%2.2x:%2.2x:%2.2x:%2.2x:%2.2x:%2.2x", ap_li[i].bssid[0],
                     ap_li[i].bssid[1], ap_li[i].bssid[2],
                     ap_li[i].bssid[3], ap_li[i].bssid[4],
                     ap_li[i].bssid[5]);
             ap_model->setItem(i, 1, new QStandardItem(bssid_buf));
+            ap_model->item(i,1)->setTextAlignment(Qt::AlignCenter);
+
+            /* 加密方式 */
             switch(ap_li[i].encrypt_type) {
             case 0x00:
                 ap_model->setItem(i, 2, new QStandardItem("未加密"));
@@ -131,10 +184,11 @@ void aplist::get_ap_list()
                 ap_model->setItem(i, 2, new QStandardItem("未知"));
                 break;
             }
+            ap_model->item(i,2)->setTextAlignment(Qt::AlignCenter);
 
-            ap_model->item(i, 0)->setFont( QFont( "Arial", 10, QFont::Black ) );
-            ap_model->item(i, 1)->setFont( QFont( "Arial", 10, QFont::Black ) );
-            ap_model->item(i, 2)->setFont( QFont( "微软雅黑", 10, QFont::Black ) );
+            /* 流量统计 */
+            ap_model->setItem(i, 3, new QStandardItem("流量统计"));
+            ap_model->item(i,3)->setTextAlignment(Qt::AlignCenter);
         }
 
 
