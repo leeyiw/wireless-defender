@@ -1,13 +1,23 @@
 #include "aplist.h"
 #include "ui_aplist.h"
 #include <QStandardItem>
-QStandardItemModel *ap_model = new QStandardItemModel();
+#include <QMessageBox>
+typedef struct AP_list {
+    QString ssid;
+    quint8 ssid_len;
+    int encrypt_type;
+    unsigned int bssid;
+
+} AP_list_t;
+    AP_list_t ap_li[200];
+    quint8  n_ap;
+    QStandardItemModel *ap_model = new QStandardItemModel();
 aplist::aplist(QWidget *parent) :
-    QWidget(parent),
+QWidget(parent),
     ui(new Ui::aplist)
 {
     ui->setupUi(this);
-    connect(ui->aplistButton, SIGNAL(clicked()),SLOT(show_data()));
+    connect(ui->aplistButton, SIGNAL(clicked()),SLOT(require_ap_list()));
     make_model();
 }
 void aplist::make_model()
@@ -24,8 +34,100 @@ void aplist::make_model()
     ui->ap_table->setSelectionBehavior(QAbstractItemView::SelectRows);
     //设置表格的单元为只读属性，即不能编辑
     ui->ap_table->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    //require_ap_list();
+
 }
+void  aplist::require_ap_list()
+{
+    tcpSocket.connectToHost("127.0.0.1",9387);
+    QByteArray block;
+    quint8 type = 0x01;
+    quint8 request_type = 0x01;
+    QDataStream out(&block, QIODevice::WriteOnly);
+    out.setByteOrder(QDataStream::LittleEndian);
+    out <<type<<request_type;
+    tcpSocket.write(block);
+    connect(&tcpSocket,SIGNAL(readyRead()),this,SLOT(get_ap_list()));
+}
+
+void aplist::get_ap_list()
+{
+    QDataStream in(&tcpSocket);
+    quint8 type;
+    quint8 request_type;
+    in.setByteOrder(QDataStream::LittleEndian);
+    in>>type>>request_type>>n_ap;;
+
+    if(type!=0x02)
+    {
+        tcpSocket.close();
+        //error();
+    }
+    if(type==0x02)
+    {
+        //QMessageBox::about(NULL, "1", " re_type_0x02");
+        if(request_type==0x01)
+        {
+            //QMessageBox::about(NULL, "2", " re_type_0x01");
+            connect(&tcpSocket,SIGNAL(readyRead()),this,SLOT(get_ap_num()));
+        }
+        else
+        {
+            tcpSocket.close();
+            //           error();
+        }
+    }
+    disconnect(&tcpSocket,SIGNAL(readyRead()),this,SLOT(get_head()));
+}
+/*void aplist::get_ap_num()
+{
+
+    QDataStream in(&tcpSocket);
+    in.setByteOrder(QDataStream::LittleEndian);
+    if(tcpSocket.bytesAvailable()==1)
+    {
+        in>>n_ap;
+    }
+    ui->ap_num->display(n_ap);
+    disconnect(&tcpSocket,SIGNAL(readyRead()),this,SLOT(get_ap_num()));
+    connect(&tcpSocket,SIGNAL(readyRead()),this,SLOT(get_ap_list()));
+
+}*/
+/*void aplist::get_ap_list()
+{
+    QDataStream in(&tcpSocket);
+   in.setByteOrder(QDataStream::LittleEndian);
+   for(int i=0;i<n_ap;i++)
+   {
+        in>>ap_li[i].ssid_len;
+        if(tcpSocket.bytesAvailable()==ap_li[i].ssid_len)
+        {
+            in>>ap_li[i].ssid;
+            QMessageBox::about(NULL, "ssid", ap_li[i].ssid);
+        }
+        else
+            break;
+        //ap_li[i].encrypt_type;
+
+    }
+    connect(&tcpSocket,SIGNAL(readyRead()),this,SLOT(show_data()));
+}*/
+
 void aplist::show_data()
+{
+
+
+    for(int i=0;i<n_ap;i++)
+    {
+
+        ap_model->setItem(i, 0, new QStandardItem(ap_li[i].ssid));
+        ap_model->item(i,0)->setTextAlignment(Qt::AlignCenter);
+        ap_model->item(i, 0)->setFont( QFont( "Times", 10, QFont::Black ) );
+    }
+
+
+}
+void aplist::show_data_static()
 {
     ap_model->setItem(0, 0, new QStandardItem("CMCC"));
     ap_model->setItem(1, 0, new QStandardItem("CMCC-EDU"));

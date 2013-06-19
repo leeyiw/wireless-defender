@@ -22,7 +22,8 @@ SOURCES += main.cpp\
 HEADERS  += mainwindow.h \
     connect.h \
     aplist.h \
-    arp.h
+    arp.h \
+    network.h
 
 FORMS    += mainwindow.ui \
     Connect.ui \

@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QtNetwork>
+#include "network.h"
 
 
 
@@ -20,7 +21,7 @@ public:
 
 private:
     Ui::Widget *ui;
-    QTcpSocket tcpSocket;
+
     quint32 security_type;
     quint8 status;
     quint8 verified_type;

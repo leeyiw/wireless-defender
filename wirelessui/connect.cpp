@@ -1,5 +1,6 @@
 #include "connect.h"
 #include "ui_Connect.h"
+#include "aplist.h"
 #include <QMessageBox>
 Connect::Connect(QWidget *parent) :
     QWidget(parent),
