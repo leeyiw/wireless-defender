@@ -1,5 +1,6 @@
 #include "flow.h"
 #include "analyse.h"
+#include "decrypt.h"
 
 TCP_flow *g_tcp_inflow = NULL;
 TCP_flow *g_tcp_outflow = NULL;
@@ -12,14 +13,18 @@ analyse_flow_init()
 
 	memset( g_tcp_inflow, 0, sizeof( g_tcp_inflow ) );	
 	memset( g_tcp_outflow, 0, sizeof( g_tcp_outflow ) );
+
+	pthread_rwlock_init( &g_tcp_inflow->flow_lock, NULL );
+	pthread_rwlock_init( &g_tcp_outflow->flow_lock, NULL );
 }
 
 void
-analyse_flow( frame_t *frame )
+analyse_flow( frame_t *frame , int encrypt )
 {
 	TCP_flow *flow = NULL;	
-	int port;
+	int port = 0;
 	int bytes;
+	int z = ( frame->bytes[1] & 3 ) == 3 ? 30 : 24;
 
 	if( !memcmp( frame->sa, user_stmac, 6 ) ) {
 		flow = g_tcp_inflow;		
@@ -27,31 +32,45 @@ analyse_flow( frame_t *frame )
 		flow = g_tcp_outflow;
 	}
 	
-	bytes = frame->bytes[2] * 256 + frame->bytes[3];
+	if( WEP_ENCRYPT == encrypt ) {
+		z += 4;		
+	} else if( WPA_ENCRYPT == encrypt ) {
+		z += 8;	
+	}
+	z += 8;
 
-	if( TCP == frame->bytes[17] ) {
-		port = frame->bytes[30] * 256 + frame->bytes[31];
+	bytes = frame->bytes[z + 2] * 256 + frame->bytes[z + 3];
 
+	if( TCP == frame->bytes[z + 9] ) {
+		port = frame->bytes[z + 20] * 256 + frame->bytes[z + 21];
+		pthread_rwlock_wrlock( &flow->flow_lock );
 		switch( port ) {
 			case SMTP:
 					flow->smtp += ( double )( bytes + 20 ) / KB;
+					printf( "%lf\n", flow->smtp );
 					break;
 			case TELNET:
 					flow->telnet += ( double )( bytes + 20 ) / KB;
+					printf( "%lf\n", flow->telnet );
 					break;
 			case SSH:
 					flow->ssh += ( double )( bytes + 20 ) / KB;
+					printf( "%lf\n", flow->ssh );
 					break;
 			case HTTP:
 					flow->http += ( double )( bytes + 20 ) / KB;
+					printf( "%lf\n", flow->http );
 					break;
 			case FTP:
 					flow->ftp += ( double )( bytes + 20 ) / KB;
+					printf( "%lf\n", flow->ftp );
 					break;
 			case DNS:
 					flow->dns += ( double )( bytes + 20 ) / KB;
+					printf( "%lf\n", flow->dns );
 					break;
 		} 
+		pthread_rwlock_unlock( &flow->flow_lock );
 	}
 }
 

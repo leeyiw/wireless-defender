@@ -21,12 +21,13 @@ typedef struct _TCP_flow {
 	double telnet;
 	double ftp;
 	double dns;
+	pthread_rwlock_t flow_lock;
 }TCP_flow;
 
 extern TCP_flow *g_tcp_inflow;
 extern TCP_flow *g_tcp_outflow;
 
 extern void analyse_flow_init();
-extern void analyse_flow( frame_t *frame );
+extern void analyse_flow( frame_t *frame, int encrypt );
 
 #endif

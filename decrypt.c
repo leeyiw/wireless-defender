@@ -432,7 +432,7 @@ pre_encrypt( void *arg )
 				}
 				pthread_rwlock_unlock( &wpa->wpa_lock );
 			} 
-			analyse_flow( frame );
+			analyse_flow( frame, cur->encrypt );
 		}
 
 		stage->is_ready = 0;
