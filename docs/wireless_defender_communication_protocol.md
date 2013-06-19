@@ -330,3 +330,35 @@ ap_list (variable): 一个变长的AP结构体列表。AP结构体的个数在 *
 <a name="flow-statistics-packet"></a>
 ### 4.6 流量统计数据包
 流量统计数据包是服务器在收到客户端的请求类型为REQ_TYPE_FLOW_STATISTICS的数据请求数据包后，向客户端返回设备统计到的数据流量信息的数据包。数据包内容如下：
+
+TCP流入流量信息（单位：KB）：
+
+flow_type (1 byte): FLOW_TYPE_TCP_IN(0x01)
+
+http_flow (8 bytes): HTTP协议的流量信息
+
+ssh_flow (8 bytes): SSH协议的流量信息
+
+smtp_flow (8 bytes): SMTP协议的流量信息
+
+telnet_flow (8 bytes): TELNET协议的流量信息
+
+ftp_flow (8 bytes): FTP协议的流量信息
+
+dns_flow (8 bytes): DNS协议的流量信息
+
+TCP流出量信息（单位：KB）：
+
+flow_type (1 byte): FLOW_TYPE_TCP_OUT(0x02)
+
+http_flow (8 bytes): HTTP协议的流量信息
+
+ssh_flow (8 bytes): SSH协议的流量信息
+
+smtp_flow (8 bytes): SMTP协议的流量信息
+
+telnet_flow (8 bytes): TELNET协议的流量信息
+
+ftp_flow (8 bytes): FTP协议的流量信息
+
+dns_flow (8 bytes): DNS协议的流量信息
