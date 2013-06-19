@@ -4,6 +4,7 @@
 #include <QMessageBox>
 extern QString host_address;
 extern QTcpSocket tcpSocket;
+extern bool logged;
 typedef struct AP_list {
     QString ssid;
     quint8 ssid_len;
@@ -12,35 +13,38 @@ typedef struct AP_list {
 
 } AP_list_t;
 AP_list_t ap_li[200];
-quint8  n_ap;
+quint8  n_ap=0;
 QStandardItemModel *ap_model = new QStandardItemModel();
 aplist::aplist(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::aplist)
 {
     ui->setupUi(this);
-   // ui->aplistButton->setEnabled(false);
+  //  ui->aplistButton->setEnabled(false);
     connect(ui->aplistButton, SIGNAL(clicked()),SLOT(require_ap_list()));
     make_model();
+    get_veriyed();
 }
-/*void aplist::get_veriyed()
+void aplist::get_veriyed()
 {
     if(logged==true)
     {
         ui->aplistButton->setEnabled(true);
-        connect(ui->aplistButton, SIGNAL(clicked()),SLOT(require_ap_list()));
+      //  connect(ui->aplistButton, SIGNAL(clicked()),SLOT(require_ap_list()));
     }
-}*/
+}
 
 
 void aplist::make_model()
 {
     ap_model->setHorizontalHeaderItem(0, new QStandardItem(QObject::tr("ssid")));
+  // ap_model->setHorizontalHeaderItem(1, new QStandardItem(QObject::tr("加密方式")));
     //利用setModel()方法将数据模型与QTableView绑定
     //ui->student_tableview
     ui->ap_table->setModel(ap_model);
     //设置表格的各列的宽度值
     ui->ap_table->setColumnWidth(0,470);
+   // ui->ap_table->setColumnWidth(0,100);
     //隐藏行头
     ui->ap_table->verticalHeader()->hide();
     //设置选中时为整行选中
@@ -53,7 +57,7 @@ void aplist::make_model()
 void  aplist::require_ap_list()
 {
 
-    tcpSocket.connectToHost(host_address,9387);
+  // tcpSocket.connectToHost(host_address,9387);
     //tcpSocket.connectToHost("127.0.0.1",9387);
     QByteArray block;
     quint8 type = 0x01;
@@ -118,36 +122,38 @@ void aplist::get_ap_list()
     char ssid_buf[512] = {0};
     in.setByteOrder(QDataStream::LittleEndian);
     in>>type>>request_type>>n_ap;
+ //   QString s = QString::number(type, 10);
+   // QMessageBox::about(NULL, "ssid", s);
+    //QString ss = QString::number(request_type, 10);
+    //QMessageBox::about(NULL, "ssid", ss);
     if(type!=0x02)
     {
         tcpSocket.close();
         //error();
     }
-    if(type==0x02)
+    else if(type==0x02)
     {
+         in.setByteOrder(QDataStream::LittleEndian);
         //QMessageBox::about(NULL, "1", " re_type_0x02");
         if(request_type==0x01)
         {
             for(int i=0;i<n_ap;i++)
             {
                 in>>ap_li[i].ssid_len;
-                QString s = QString::number(ap_li[i].ssid_len, 10);
-                //QMessageBox::about(NULL, "ssid", s);
-                if(tcpSocket.bytesAvailable()==ap_li[i].ssid_len)
+               // QString s = QString::number(ap_li[i].ssid_len, 10);
+               // QMessageBox::about(NULL, "ssid", s);
+              //  if(tcpSocket.bytesAvailable()==ap_li[i].ssid_len)
                 {
                     in.readRawData(ssid_buf, ap_li[i].ssid_len);
                     ssid_buf[ap_li[i].ssid_len] = '\0';
                     ap_li[i].ssid = QString(ssid_buf);
+                   // QMessageBox::about(NULL, "ssid", ap_li[i].ssid);
 
                 }
-                else
-                    break;
-            }}
-            else
-            {
-                tcpSocket.close();
-                //           error();
+
             }
+        show_data();
+        }
 
             //ap_li[i].encrypt_type;
 

@@ -3,7 +3,7 @@
 #include "aplist.h"
 #include <QMessageBox>
 QTcpSocket tcpSocket;
-bool logged;
+bool logged=false;
 QString host_address;
 
 Connect::Connect(QWidget *parent) :
@@ -25,7 +25,7 @@ void Connect:: connectToServer()
         QMessageBox::about(NULL, "错误", " <font color='red'>连接超时</font>");
         return;
     }
-    connected = tcpSocket.waitForConnected();
+   // connected = tcpSocket.waitForConnected();
     //连接到主机
 }
 void Connect::sendMessage()
@@ -100,12 +100,12 @@ int Connect::verified_status()
 {
     QDataStream in(&tcpSocket);
     in.setByteOrder(QDataStream::LittleEndian);
-    if(tcpSocket.bytesAvailable()==5)
-    {  in>>verified_type>>verified_failure_code;
+    if(tcpSocket.bytesAvailable()==1)
+    {  in>>verified_type;
     }
     if(verified_type==0x02)
     {
-        logged=true;
+        //extern  list get_veriyed();
     }
     if(verified_type==0x03)
     {
