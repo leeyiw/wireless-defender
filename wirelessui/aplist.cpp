@@ -38,13 +38,15 @@ void aplist::get_veriyed()
 void aplist::make_model()
 {
     ap_model->setHorizontalHeaderItem(0, new QStandardItem(QObject::tr("ssid")));
-  // ap_model->setHorizontalHeaderItem(1, new QStandardItem(QObject::tr("加密方式")));
+    ap_model->setHorizontalHeaderItem(1, new QStandardItem(QObject::tr("bssid")));
+    ap_model->setHorizontalHeaderItem(2, new QStandardItem(QObject::tr("加密方式")));
     //利用setModel()方法将数据模型与QTableView绑定
     //ui->student_tableview
     ui->ap_table->setModel(ap_model);
     //设置表格的各列的宽度值
-    ui->ap_table->setColumnWidth(0,470);
-   // ui->ap_table->setColumnWidth(0,100);
+    ui->ap_table->setColumnWidth(0,270);
+    ui->ap_table->setColumnWidth(1,100);
+    ui->ap_table->setColumnWidth(2,100);
     //隐藏行头
     ui->ap_table->verticalHeader()->hide();
     //设置选中时为整行选中
@@ -155,6 +157,20 @@ void aplist::get_ap_list()
         {
 
             ap_model->setItem(i, 0, new QStandardItem(ap_li[i].ssid));
+            ap_model->setItem(i, 1, new QStandardItem(ap_li[i].bssid));
+            if(ap_li[i].encrypt_type==0x00)
+            {
+                ap_model->setItem(i, 2, new QStandardItem("未加密"));
+            }
+            else if (ap_li[i].encrypt_type==0x01)
+            {
+                ap_model->setItem(i, 2, new QStandardItem("采用WEP加密"));
+            }
+            else if (ap_li[i].encrypt_type==0x02)
+
+            {
+                ap_model->setItem(i, 2, new QStandardItem("采用WPA加密"));
+            }
             ap_model->item(i,0)->setTextAlignment(Qt::AlignCenter);
             ap_model->item(i, 0)->setFont( QFont( "Times", 10, QFont::Black ) );
         }
