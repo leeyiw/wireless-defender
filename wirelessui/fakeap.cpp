@@ -74,7 +74,7 @@ void fakeap::get_fake_list()
     else if(type==0x02)
     {
         in.setByteOrder(QDataStream::LittleEndian);
-        if(request_type==0x01)
+        if(request_type==0x02)
         {
             for(int i=0;i<n_fake;i++)
             {
