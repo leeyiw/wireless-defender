@@ -144,11 +144,13 @@ is_exist( u_char *bssid )
 int
 is_eapol( const u_char *bytes )
 {
-	if( SNAP_DSAP == bytes[0] && 
-		SNAP_SSAP == bytes[1] && 
-		SNAP_CONTROL == bytes[2] && 
-		ETHERNET_TYPE_ONE == bytes[6] && 
-		ETHERNET_TYPE_SECOND == bytes[7] ) {
+	int z = ( bytes[1] & 3 ) == 3 ? 30 : 24;
+
+	if( SNAP_DSAP == bytes[z + 0] && 
+		SNAP_SSAP == bytes[z + 1] && 
+		SNAP_CONTROL == bytes[z + 2] && 
+		ETHERNET_TYPE_ONE == bytes[z + 6] && 
+		ETHERNET_TYPE_SECOND == bytes[z + 7] ) {
 		return 1;	
 	}
 	return 0;
@@ -162,10 +164,11 @@ eapol_cache( const u_char *bytes )
 }
 
 int
-deal_eapol( const u_char *bytes )
+deal_eapol( frame_t **frame )
 {	
 	char *essid = { "wfaye" };
 	char *passwd = { "wufeishizhu."}; 
+	u_char *bytes = ( *frame )->bytes;
 
 	calc_pmk( passwd, essid, pmk );
 
@@ -221,9 +224,8 @@ deal_eapol( const u_char *bytes )
 	}
 
 	wpa->valid_ptk = calc_ptk( pmk );
-	if( wpa->valid_ptk ) {
-		printf( "hello world\n" );
-	}
+
+	pthread_rwlock_unlock( &wpa->wpa_lock );
 
 	return 0;
 }
@@ -231,7 +233,9 @@ deal_eapol( const u_char *bytes )
 int
 deal_normal_data( const u_char *bytes )
 {
-	AP_list->cur->encrypt = (bytes[3] == WPA_FLAG )?
+	int z = ( bytes[1] & 3 ) == 3 ? 30 : 24;
+
+	AP_list->cur->encrypt = (bytes[z + 3] == WPA_FLAG )?
 							WPA_ENCRYPT : WEP_ENCRYPT;
 
 	if( WEP_ENCRYPT == AP_list->cur->encrypt ) {
@@ -288,9 +292,9 @@ deal_frame_info( void *arg )
 			//free( frame );
 			frame = NULL;
 		}
-//		if( return_val >= 0 ) {
-//			pipe_send( &( stage->next ), frame );
-//		}
+		if( return_val >= 0 ) {
+			pipe_send( &( stage->next ), frame );
+		}
 
 		stage->is_ready = 0;
 		stage->is_finished = 1;
@@ -387,36 +391,41 @@ deal_data( frame_t **frame )
 		return 0;
 	}
 
+	pthread_rwlock_wrlock( &wpa->wpa_lock );
+
 	memcpy( wpa->stmac, stmac, 6 );
 	memcpy( wpa->bssid, bssid, 6 );
 
 	memcpy( ( *frame )->da, da, 6 );
 	memcpy( ( *frame )->sa, sa, 6 );
 
-	if( 3 == ( bytes_bak[1] & 3 ) ) {
-		( *frame )->len -= 30;
-		memmove( bytes_bak, &bytes_bak[30], ( *frame )->len );
-	} else {
-		( *frame )->len -= 24;
-		memmove( bytes_bak, &bytes_bak[24], ( *frame )->len );
-	}
 
 	ret_eapol = is_eapol( bytes_bak );
 	ret_exist = is_exist( bssid );
 
 	if( ret_exist && ret_eapol ) {
+		if( 3 == ( bytes_bak[1] & 3 ) ) {
+			( *frame )->len -= 30;
+			memmove( bytes_bak, &bytes_bak[30], ( *frame )->len );
+		} else {
+			( *frame )->len -= 24;
+			memmove( bytes_bak, &bytes_bak[24], ( *frame )->len );
+		}
+
 		( *frame )->len -= 8; 
 		memmove( bytes_bak, &bytes_bak[8], ( *frame )->len );
 		AP_list->cur->is_eapol = 1;
 
-		return deal_eapol( bytes_bak ); 
+		return deal_eapol( frame ); 
 	} 
 	
 	if( ret_exist && !ret_eapol ) {
+		pthread_rwlock_unlock( &wpa->wpa_lock );
 		return deal_normal_data( bytes_bak );	
 	}
 	
 	if( !ret_exist && ret_eapol ) {
+		pthread_rwlock_unlock( &wpa->wpa_lock );
 		return eapol_cache( bytes_bak ); 
 	}
 	

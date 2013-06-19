@@ -34,22 +34,22 @@ analyse_flow( frame_t *frame )
 
 		switch( port ) {
 			case SMTP:
-					flow->smtp += bytes + 20;
+					flow->smtp += ( double )( bytes + 20 ) / KB;
 					break;
 			case TELNET:
-					flow->telnet += bytes + 20;
+					flow->telnet += ( double )( bytes + 20 ) / KB;
 					break;
 			case SSH:
-					flow->ssh += bytes + 20;
+					flow->ssh += ( double )( bytes + 20 ) / KB;
 					break;
 			case HTTP:
-					flow->http += bytes + 20;
+					flow->http += ( double )( bytes + 20 ) / KB;
 					break;
 			case FTP:
-					flow->ftp += bytes + 20;
+					flow->ftp += ( double )( bytes + 20 ) / KB;
 					break;
 			case DNS:
-					flow->dns += bytes + 20;
+					flow->dns += ( double )( bytes + 20 ) / KB;
 					break;
 		} 
 	}

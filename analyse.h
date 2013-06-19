@@ -97,7 +97,7 @@ extern void *deal_frame_info( void *arg );
 extern int deal_type( frame_t **frame );
 extern int deal_beacon_mac( const u_char *bytes, int *packet_len );
 extern int deal_data( frame_t **frame );
-extern int deal_eapol( const u_char *bytes );
+extern int deal_eapol( frame_t **frame );
 extern int deal_normal_data( const u_char *bytes );
 extern void deal_timestamp( const u_char *bytes, int *packet_len ); 
 extern void deal_ssid( const u_char *bytes, int *packet_len );

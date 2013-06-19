@@ -12,13 +12,15 @@
 #define TELNET		23
 #define DNS			53
 
+#define KB			1024
+
 typedef struct _TCP_flow {
-	int http;	
-	int ssh;
-	int smtp;
-	int telnet;
-	int ftp;
-	int dns;
+	double http;	
+	double ssh;
+	double smtp;
+	double telnet;
+	double ftp;
+	double dns;
 }TCP_flow;
 
 extern TCP_flow *g_tcp_inflow;

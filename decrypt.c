@@ -85,6 +85,7 @@ decrypt_init()
 	wpa = ( WPA_info_t * )malloc( sizeof( WPA_info_t ) );	
 	memset( wpa->snonce, 0, 32 );
 	memset( wpa->anonce, 0, 32 );
+	pthread_rwlock_init( &wpa->wpa_lock, NULL );
 }
 
 void 
@@ -221,28 +222,30 @@ calc_ptk( u_char pmk[40] )
         HMAC(EVP_sha1(), wpa->ptk, 16, wpa->eapol, 
 										wpa->eapol_size, mic, NULL );
 
-
     return( memcmp( mic, wpa->keymic, 16 ) == 0 );
 }
 
 int 
-calc_tkip_ppk( u_char *bytes, int caplen, u_char TK1[16], u_char key[16] )
+calc_tkip_ppk( u_char *bytes, int len, u_char TK1[16], u_char key[16] )
 {
-    int i;
+    int i, z;
     uint32_t IV32;
     uint16_t IV16;
     uint16_t PPK[6];
 
-    IV16 = MK16( bytes[0], bytes[2] );
+    if(len) {}
 
-    IV32 = ( bytes[4]       ) | ( bytes[5] <<  8 ) |
-           ( bytes[6] << 16 ) | ( bytes[7] << 24 );
+    z = ( ( bytes[1] & 3 ) != 3 ) ? 24 : 30;
+    IV16 = MK16( bytes[z], bytes[z + 2] );
+
+    IV32 = ( bytes[z + 4]       ) | ( bytes[z + 5] <<  8 ) |
+           ( bytes[z + 6] << 16 ) | ( bytes[z + 7] << 24 );
 
     PPK[0] = LO16( IV32 );
     PPK[1] = HI16( IV32 );
-    PPK[2] = MK16( wpa->stmac[1], wpa->stmac[0] );
-    PPK[3] = MK16( wpa->stmac[3], wpa->stmac[2] );
-    PPK[4] = MK16( wpa->stmac[5], wpa->stmac[4] );
+    PPK[2] = MK16( bytes[11], bytes[10] );
+    PPK[3] = MK16( bytes[13], bytes[12] );
+    PPK[4] = MK16( bytes[15], bytes[14] );
 
     for( i = 0; i < 8; i++ )
     {
@@ -284,15 +287,96 @@ calc_tkip_ppk( u_char *bytes, int caplen, u_char TK1[16], u_char key[16] )
 }
 
 void
-decrypt_tkip( u_char *bytes, int len, u_char TK1[16] )
+decrypt_tkip( u_char *bytes, int len,  u_char TK1[16] )
 {
-    u_char K[16];
+	u_char K[16];
+	int z = ( bytes[1] & 3 ) == 3 ? 30 : 24;
 
-    calc_tkip_ppk( bytes, len, TK1, K );
+    calc_tkip_ppk( bytes, len - 4, TK1, K );
 
-    return( wep_decrypt( bytes + 8, K, 16, len - 8 ) );
+    return( wep_decrypt( bytes + z + 8, K, len - 8 - z - 4, 16 ) );
 }		
 
+static inline void XOR( u_char *dst, u_char *src, int len )
+{
+    int i;
+    for( i = 0; i < len; i++ )
+        dst[i] ^= src[i];
+}
+
+int
+decrypt_ccmp( u_char *bytes, int len, u_char TK1[16] )
+{
+    int is_a4, i, n, z, blocks;
+    int data_len, last, offset;
+    u_char B0[16], B[16], mic[16];
+    u_char PN[6], AAD[32];
+    AES_KEY aes_ctx;
+
+    is_a4 = ( bytes[1] & 3 ) == 3;
+
+    z = 24 + 6 * is_a4;
+
+    PN[0] = bytes[z + 7];
+    PN[1] = bytes[z + 6];
+    PN[2] = bytes[z + 5];
+    PN[3] = bytes[z + 4];
+    PN[4] = bytes[z + 1];
+    PN[5] = bytes[z + 0];
+
+    data_len = len - z - 8 - 8;
+
+    B0[0] = 0x59;
+    B0[1] = 0;
+    memcpy( B0 + 2, bytes + 10, 6 );
+    memcpy( B0 + 8, PN, 6 );
+    B0[14] = ( data_len >> 8 ) & 0xFF;
+    B0[15] = ( data_len & 0xFF );
+
+    memset( AAD, 0, sizeof( AAD ) );
+
+    AAD[1] = 22 + 6 * is_a4;
+    AAD[2] = bytes[0] & 0x8F;
+    AAD[3] = bytes[1] & 0xC7;
+    memcpy( AAD + 4, bytes + 4, 3 * 6 );
+    AAD[22] = bytes[22] & 0x0F;
+    if( is_a4 )
+        memcpy( AAD + 24, bytes + 24, 6 );
+
+    AES_set_encrypt_key( TK1, 128, &aes_ctx );
+    AES_encrypt( B0, mic, &aes_ctx );
+    XOR( mic, AAD, 16 );
+    AES_encrypt( mic, mic, &aes_ctx );
+    XOR( mic, AAD + 16, 16 );
+    AES_encrypt( mic, mic, &aes_ctx );
+
+    B0[0] &= 0x07;
+    B0[14] = B0[15] = 0;
+    AES_encrypt( B0, B, &aes_ctx );
+    XOR( bytes + len - 8, B, 8 );
+
+    blocks = ( data_len + 16 - 1 ) / 16;
+    last = data_len % 16;
+    offset = z + 8;
+
+    for( i = 1; i <= blocks; i++ )
+    {
+        n = ( last > 0 && i == blocks ) ? last : 16;
+
+        B0[14] = ( i >> 8 ) & 0xFF;
+        B0[15] =   i & 0xFF;
+
+        AES_encrypt( B0, B, &aes_ctx );
+        XOR( bytes + offset, B, n );
+        XOR( mic, bytes + offset, n );
+        AES_encrypt( mic, mic, &aes_ctx );
+
+        offset += n;
+    }
+
+    return( memcmp( bytes + offset, mic, 8 ) == 0 );
+	
+}
 void *
 pre_encrypt( void *arg )
 {
@@ -332,23 +416,23 @@ pre_encrypt( void *arg )
 				wep_decrypt( frame->bytes, key,	
 								frame->len - 4,
 								IV_LEN + ( user->passwd_len ) / 2 );
-
-				analyse_flow( frame );
-
 			} else if( WPA_ENCRYPT == cur->encrypt ) {
-//				
-//				wpa->valid_ptk = calc_ptk( pmk );
-//				printf( "%d\n", wpa->valid_ptk );
-//
-//				if( TKIP == wpa->keyver ) {
-//
-//					decrypt_tkip( frame->bytes, frame->len, 
-//										wpa->ptk + 32 );		
-//				} else {
-//  			//		decrypt_ccmp( frame->bytes, frame_len,
-//  			//						wpa->ptk + 32 );
-//				}
+				pthread_rwlock_rdlock( &wpa->wpa_lock );
+
+				if( !wpa->valid_ptk ) {
+					pthread_rwlock_unlock( &wpa->wpa_lock );
+					continue;
+				}
+				if( TKIP == wpa->keyver ) {
+					decrypt_tkip( frame->bytes, frame->len ,
+											wpa->ptk + 32 );		
+				} else {
+  					decrypt_ccmp( frame->bytes, frame->len,
+  							wpa->ptk + 32 );
+				}
+				pthread_rwlock_unlock( &wpa->wpa_lock );
 			} 
+			analyse_flow( frame );
 		}
 
 		stage->is_ready = 0;

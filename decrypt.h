@@ -6,6 +6,7 @@
 #include <openssl/hmac.h>
 #include <openssl/rc4.h>
 #include <openssl/sha.h>
+#include <openssl/aes.h>
 
 #define IV_LEN		3 
 
@@ -40,7 +41,7 @@ typedef struct WPA_info {
 	int eapol_size;
 	int keyver;
 	int valid_ptk;
-	pthread_mutex_t wpa_lock;
+	pthread_rwlock_t wpa_lock;
 } WPA_info_t;
 
 extern user_info_t *user; 
