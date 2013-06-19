@@ -2,6 +2,10 @@
 #include "ui_Connect.h"
 #include "aplist.h"
 #include <QMessageBox>
+QTcpSocket tcpSocket;
+bool logged;
+QString host_address;
+
 Connect::Connect(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::Widget)
@@ -9,11 +13,14 @@ Connect::Connect(QWidget *parent) :
     ui->setupUi(this);
     connect(&tcpSocket, SIGNAL(connected()), this, SLOT(sendMessage()));
     connect(ui->ConnectButton, SIGNAL(clicked()), this, SLOT(connectToServer()));
+
 }
 void Connect:: connectToServer()
 {
+
     tcpSocket.abort(); //取消已有的连接
-    tcpSocket.connectToHost(ui->hostLineEdit->text(),9387);
+   host_address=ui->hostLineEdit->text();
+    tcpSocket.connectToHost(host_address,9387);
     if (!tcpSocket.waitForConnected(Timeout)) {			//连接超时处理
         QMessageBox::about(NULL, "错误", " <font color='red'>连接超时</font>");
         return;
@@ -98,7 +105,7 @@ int Connect::verified_status()
     }
     if(verified_type==0x02)
     {
-        return 0x01;
+        logged=true;
     }
     if(verified_type==0x03)
     {

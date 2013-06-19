@@ -2,6 +2,8 @@
 #include "ui_aplist.h"
 #include <QStandardItem>
 #include <QMessageBox>
+extern QString host_address;
+extern QTcpSocket tcpSocket;
 typedef struct AP_list {
     QString ssid;
     quint8 ssid_len;
@@ -9,17 +11,28 @@ typedef struct AP_list {
     unsigned int bssid;
 
 } AP_list_t;
-    AP_list_t ap_li[200];
-    quint8  n_ap;
-    QStandardItemModel *ap_model = new QStandardItemModel();
+AP_list_t ap_li[200];
+quint8  n_ap;
+QStandardItemModel *ap_model = new QStandardItemModel();
 aplist::aplist(QWidget *parent) :
-QWidget(parent),
+    QWidget(parent),
     ui(new Ui::aplist)
 {
     ui->setupUi(this);
+   // ui->aplistButton->setEnabled(false);
     connect(ui->aplistButton, SIGNAL(clicked()),SLOT(require_ap_list()));
     make_model();
 }
+/*void aplist::get_veriyed()
+{
+    if(logged==true)
+    {
+        ui->aplistButton->setEnabled(true);
+        connect(ui->aplistButton, SIGNAL(clicked()),SLOT(require_ap_list()));
+    }
+}*/
+
+
 void aplist::make_model()
 {
     ap_model->setHorizontalHeaderItem(0, new QStandardItem(QObject::tr("ssid")));
@@ -39,7 +52,9 @@ void aplist::make_model()
 }
 void  aplist::require_ap_list()
 {
-    tcpSocket.connectToHost("127.0.0.1",9387);
+
+    tcpSocket.connectToHost(host_address,9387);
+    //tcpSocket.connectToHost("127.0.0.1",9387);
     QByteArray block;
     quint8 type = 0x01;
     quint8 request_type = 0x01;
@@ -50,7 +65,7 @@ void  aplist::require_ap_list()
     connect(&tcpSocket,SIGNAL(readyRead()),this,SLOT(get_ap_list()));
 }
 
-void aplist::get_ap_list()
+/*void aplist::get_ap_list()
 {
     QDataStream in(&tcpSocket);
     quint8 type;
@@ -78,9 +93,9 @@ void aplist::get_ap_list()
         }
     }
     disconnect(&tcpSocket,SIGNAL(readyRead()),this,SLOT(get_head()));
-}
+}*/
 
-void aplist::get_ap_num()
+/*void aplist::get_ap_num()
 {
 
     QDataStream in(&tcpSocket);
@@ -93,62 +108,84 @@ void aplist::get_ap_num()
     disconnect(&tcpSocket,SIGNAL(readyRead()),this,SLOT(get_ap_num()));
     connect(&tcpSocket,SIGNAL(readyRead()),this,SLOT(get_ap_list()));
 
-}
+}*/
 
 void aplist::get_ap_list()
 {
-   QDataStream in(&tcpSocket);
-   in.setByteOrder(QDataStream::LittleEndian);
-   char ssid_buf[512] = {0};
-   for(int i=0;i<n_ap;i++)
-   {
-        in>>ap_li[i].ssid_len;
-        if(tcpSocket.bytesAvailable()==ap_li[i].ssid_len)
-        {
-			in.readRawBytes(ssid_buf, ap_li[i].ssid_len);
-			ssid_buf[ap_li[i].ssid_len] = '\0';
-			ap_li[i].ssid = QString(ssid_buf);
-            QMessageBox::about(NULL, "ssid", ap_li[i].ssid);
-        }
-        else
-            break;
-        //ap_li[i].encrypt_type;
-
+    QDataStream in(&tcpSocket);
+    quint8 type;
+    quint8 request_type;
+    char ssid_buf[512] = {0};
+    in.setByteOrder(QDataStream::LittleEndian);
+    in>>type>>request_type>>n_ap;
+    if(type!=0x02)
+    {
+        tcpSocket.close();
+        //error();
     }
-    connect(&tcpSocket,SIGNAL(readyRead()),this,SLOT(show_data()));
-}
+    if(type==0x02)
+    {
+        //QMessageBox::about(NULL, "1", " re_type_0x02");
+        if(request_type==0x01)
+        {
+            for(int i=0;i<n_ap;i++)
+            {
+                in>>ap_li[i].ssid_len;
+                QString s = QString::number(ap_li[i].ssid_len, 10);
+                //QMessageBox::about(NULL, "ssid", s);
+                if(tcpSocket.bytesAvailable()==ap_li[i].ssid_len)
+                {
+                    in.readRawData(ssid_buf, ap_li[i].ssid_len);
+                    ssid_buf[ap_li[i].ssid_len] = '\0';
+                    ap_li[i].ssid = QString(ssid_buf);
 
-void aplist::show_data()
-{
+                }
+                else
+                    break;
+            }}
+            else
+            {
+                tcpSocket.close();
+                //           error();
+            }
 
+            //ap_li[i].encrypt_type;
 
-    for(int i=0;i<n_ap;i++)
+        }
+        connect(&tcpSocket,SIGNAL(readyRead()),this,SLOT(show_data()));
+    }
+
+    void aplist::show_data()
     {
 
-        ap_model->setItem(i, 0, new QStandardItem(ap_li[i].ssid));
-        ap_model->item(i,0)->setTextAlignment(Qt::AlignCenter);
-        ap_model->item(i, 0)->setFont( QFont( "Times", 10, QFont::Black ) );
+
+        for(int i=0;i<n_ap;i++)
+        {
+
+            ap_model->setItem(i, 0, new QStandardItem(ap_li[i].ssid));
+            ap_model->item(i,0)->setTextAlignment(Qt::AlignCenter);
+            ap_model->item(i, 0)->setFont( QFont( "Times", 10, QFont::Black ) );
+        }
+
+
     }
-
-
-}
-void aplist::show_data_static()
-{
-    ap_model->setItem(0, 0, new QStandardItem("CMCC"));
-    ap_model->setItem(1, 0, new QStandardItem("CMCC-EDU"));
-    ap_model->setItem(2, 0, new QStandardItem("ChinaMobile"));
-    ap_model->setItem(3, 0, new QStandardItem("ChinaUnicome"));
-    ap_model->item(0,0)->setTextAlignment(Qt::AlignCenter);
-    ap_model->item(1,0)->setTextAlignment(Qt::AlignCenter);
-    ap_model->item(2,0)->setTextAlignment(Qt::AlignCenter);
-    ap_model->item(3,0)->setTextAlignment(Qt::AlignCenter);
-    //加粗
-    ap_model->item(0, 0)->setFont( QFont( "Times", 10, QFont::Black ) );
-    ap_model->item(1, 0)->setFont( QFont( "Times", 10, QFont::Black ) );
-    ap_model->item(2, 0)->setFont( QFont( "Times", 10, QFont::Black ) );
-    ap_model->item(3, 0)->setFont( QFont( "Times", 10, QFont::Black ) );
-}
-aplist::~aplist()
-{
-    delete ui;
-}
+    void aplist::show_data_static()
+    {
+        ap_model->setItem(0, 0, new QStandardItem("CMCC"));
+        ap_model->setItem(1, 0, new QStandardItem("CMCC-EDU"));
+        ap_model->setItem(2, 0, new QStandardItem("ChinaMobile"));
+        ap_model->setItem(3, 0, new QStandardItem("ChinaUnicome"));
+        ap_model->item(0,0)->setTextAlignment(Qt::AlignCenter);
+        ap_model->item(1,0)->setTextAlignment(Qt::AlignCenter);
+        ap_model->item(2,0)->setTextAlignment(Qt::AlignCenter);
+        ap_model->item(3,0)->setTextAlignment(Qt::AlignCenter);
+        //加粗
+        ap_model->item(0, 0)->setFont( QFont( "Times", 10, QFont::Black ) );
+        ap_model->item(1, 0)->setFont( QFont( "Times", 10, QFont::Black ) );
+        ap_model->item(2, 0)->setFont( QFont( "Times", 10, QFont::Black ) );
+        ap_model->item(3, 0)->setFont( QFont( "Times", 10, QFont::Black ) );
+    }
+    aplist::~aplist()
+    {
+        delete ui;
+    }

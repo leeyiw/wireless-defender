@@ -2,6 +2,8 @@
 #define NETWORK_H
 
 #include <QtNetwork>
-static QTcpSocket tcpSocket;
+//extern QTcpSocket tcpSocket;
+//extern bool logged;
+//extern QString host_address;
 
 #endif // NETWORK_H

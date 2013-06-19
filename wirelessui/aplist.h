@@ -13,6 +13,7 @@ class aplist : public QWidget
     
 public:
     explicit aplist(QWidget *parent = 0);
+    void get_veriyed();
     ~aplist();
     
 private:
@@ -26,5 +27,6 @@ private slots:
    // void get_head();
     void make_model();
     void get_ap_list();
+
 };
 #endif // APLIST_H
