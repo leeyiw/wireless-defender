@@ -23,8 +23,6 @@ private slots:
     void require_ap_list();
     void show_data();
     void show_data_static();
-   // void get_ap_num();
-   // void get_head();
     void make_model();
     void get_ap_list();
 

@@ -65,11 +65,10 @@ void MainWindow::initData()
 
     anticrack=new QLabel(this);
     anticrack->setText("this is anticrack");
-    fakeap=new QLabel(this);
-    fakeap->setText("this is fakeap");
+
     ui->stackedWidget->addWidget(&arp_tab);
     ui->stackedWidget->addWidget(anticrack);
-    ui->stackedWidget->addWidget(fakeap);
+    ui->stackedWidget->addWidget(&fake);
 
     ui->stackedWidget->addWidget(&network);
 

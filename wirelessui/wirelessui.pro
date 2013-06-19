@@ -17,18 +17,21 @@ SOURCES += main.cpp\
         mainwindow.cpp \
     connect.cpp \
     aplist.cpp \
-    arp.cpp
+    arp.cpp \
+    fakeap.cpp
 
 HEADERS  += mainwindow.h \
     connect.h \
     aplist.h \
     arp.h \
-    network.h
+    network.h \
+    fakeap.h
 
 FORMS    += mainwindow.ui \
     Connect.ui \
     aplist.ui \
-    arp.ui
+    arp.ui \
+    fakeap.ui
 
 RESOURCES += \
     res.qrc

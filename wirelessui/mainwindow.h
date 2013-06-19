@@ -9,6 +9,7 @@
 #include "aplist.h"
 #include "arp.h"
 #include "network.h"
+#include "fakeap.h"
 namespace Ui {
 class MainWindow;
 }
@@ -19,10 +20,11 @@ class MainWindow : public QMainWindow
     
 public:
 
-    QLabel *fakeap;
+
     QLabel *anticrack;
     arp arp_tab;
     aplist list;
+    fakeap fake;
     Connect network;
 
     explicit MainWindow(QWidget *parent = 0);
