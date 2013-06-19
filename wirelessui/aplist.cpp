@@ -6,10 +6,10 @@ extern QString host_address;
 extern QTcpSocket tcpSocket;
 extern bool logged;
 typedef struct AP_list {
-    QString ssid;
     quint8 ssid_len;
-    int encrypt_type;
-    unsigned int bssid;
+    QString ssid;
+    quint8 encrypt_type;
+    char bssid[6];
 
 } AP_list_t;
 AP_list_t ap_li[200];
@@ -122,10 +122,6 @@ void aplist::get_ap_list()
     char ssid_buf[512] = {0};
     in.setByteOrder(QDataStream::LittleEndian);
     in>>type>>request_type>>n_ap;
- //   QString s = QString::number(type, 10);
-   // QMessageBox::about(NULL, "ssid", s);
-    QString ss = QString::number(n_ap, 10);
-    QMessageBox::about(NULL, "ssid", ss);
     if(type!=0x02)
     {
         tcpSocket.close();
@@ -133,33 +129,23 @@ void aplist::get_ap_list()
     }
     else if(type==0x02)
     {
-         in.setByteOrder(QDataStream::LittleEndian);
-        //QMessageBox::about(NULL, "1", " re_type_0x02");
+        in.setByteOrder(QDataStream::LittleEndian);
         if(request_type==0x01)
         {
             for(int i=0;i<n_ap;i++)
             {
                 in>>ap_li[i].ssid_len;
-               // QString s = QString::number(ap_li[i].ssid_len, 10);
-               //QMessageBox::about(NULL, "ssid", s);
-              //  if(tcpSocket.bytesAvailable()==ap_li[i].ssid_len)
-                {
-                    in.readRawData(ssid_buf, ap_li[i].ssid_len);
-                    ssid_buf[ap_li[i].ssid_len] = '\0';
-                    ap_li[i].ssid = QString(ssid_buf);
-                   // QMessageBox::about(NULL, "ssid", ap_li[i].ssid);
-
-                }
-
+                in.readRawData(ssid_buf, ap_li[i].ssid_len);
+                ssid_buf[ap_li[i].ssid_len] = '\0';
+                ap_li[i].ssid = QString(ssid_buf);
+                in>>ap_li[i].encrypt_type;
+                in.readRawData(ap_li[i].bssid, sizeof(ap_li[i].bssid));
             }
-        show_data();
+            show_data();
         }
-
-            //ap_li[i].encrypt_type;
-
-        }
-        connect(&tcpSocket,SIGNAL(readyRead()),this,SLOT(show_data()));
     }
+    connect(&tcpSocket,SIGNAL(readyRead()),this,SLOT(show_data()));
+}
 
     void aplist::show_data()
     {
