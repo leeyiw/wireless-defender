@@ -124,8 +124,8 @@ void aplist::get_ap_list()
     in>>type>>request_type>>n_ap;
  //   QString s = QString::number(type, 10);
    // QMessageBox::about(NULL, "ssid", s);
-    //QString ss = QString::number(request_type, 10);
-    //QMessageBox::about(NULL, "ssid", ss);
+    QString ss = QString::number(n_ap, 10);
+    QMessageBox::about(NULL, "ssid", ss);
     if(type!=0x02)
     {
         tcpSocket.close();
@@ -141,7 +141,7 @@ void aplist::get_ap_list()
             {
                 in>>ap_li[i].ssid_len;
                // QString s = QString::number(ap_li[i].ssid_len, 10);
-               // QMessageBox::about(NULL, "ssid", s);
+               //QMessageBox::about(NULL, "ssid", s);
               //  if(tcpSocket.bytesAvailable()==ap_li[i].ssid_len)
                 {
                     in.readRawData(ssid_buf, ap_li[i].ssid_len);
