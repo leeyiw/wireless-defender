@@ -79,7 +79,8 @@ void aplist::get_ap_list()
     }
     disconnect(&tcpSocket,SIGNAL(readyRead()),this,SLOT(get_head()));
 }
-/*void aplist::get_ap_num()
+
+void aplist::get_ap_num()
 {
 
     QDataStream in(&tcpSocket);
@@ -92,17 +93,21 @@ void aplist::get_ap_list()
     disconnect(&tcpSocket,SIGNAL(readyRead()),this,SLOT(get_ap_num()));
     connect(&tcpSocket,SIGNAL(readyRead()),this,SLOT(get_ap_list()));
 
-}*/
-/*void aplist::get_ap_list()
+}
+
+void aplist::get_ap_list()
 {
-    QDataStream in(&tcpSocket);
+   QDataStream in(&tcpSocket);
    in.setByteOrder(QDataStream::LittleEndian);
+   char ssid_buf[512] = {0};
    for(int i=0;i<n_ap;i++)
    {
         in>>ap_li[i].ssid_len;
         if(tcpSocket.bytesAvailable()==ap_li[i].ssid_len)
         {
-            in>>ap_li[i].ssid;
+			in.readRawBytes(ssid_buf, ap_li[i].ssid_len);
+			ssid_buf[ap_li[i].ssid_len] = '\0';
+			ap_li[i].ssid = QString(ssid_buf);
             QMessageBox::about(NULL, "ssid", ap_li[i].ssid);
         }
         else
@@ -111,7 +116,7 @@ void aplist::get_ap_list()
 
     }
     connect(&tcpSocket,SIGNAL(readyRead()),this,SLOT(show_data()));
-}*/
+}
 
 void aplist::show_data()
 {
