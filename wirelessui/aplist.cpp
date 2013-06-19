@@ -124,6 +124,7 @@ void aplist::get_ap_list()
     char ssid_buf[512] = {0};
     in.setByteOrder(QDataStream::LittleEndian);
     in>>type>>request_type>>n_ap;
+    ui->ap_num->display(n_ap);
     if(type!=0x02)
     {
         tcpSocket.close();
@@ -174,8 +175,10 @@ void aplist::get_ap_list()
                 ap_model->setItem(i, 2, new QStandardItem("未知"));
                 break;
             }
-            ap_model->item(i,0)->setTextAlignment(Qt::AlignCenter);
-            ap_model->item(i, 0)->setFont( QFont( "Times", 10, QFont::Black ) );
+
+            ap_model->item(i, 0)->setFont( QFont( "Arial", 10, QFont::Black ) );
+            ap_model->item(i, 1)->setFont( QFont( "Arial", 10, QFont::Black ) );
+            ap_model->item(i, 2)->setFont( QFont( "微软雅黑", 10, QFont::Black ) );
         }
 
 
