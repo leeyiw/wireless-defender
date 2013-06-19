@@ -16,7 +16,7 @@
 time_t WD_start_time;
 
 user_info_t *user = NULL;
-u_char user_stmac[105] = { 0x84, 0x25, 0xdb, 0x3e, 0x3d, 0x30 };
+u_char user_stmac[105] = { 0x8c, 0xa9, 0x82, 0x3c, 0xd8, 0x90 };
 
 void
 user_config_init()
@@ -84,7 +84,7 @@ main(int argc, char *argv[])
 	WD_server_start();
 
 	// 初始化抓包模块
-	WD_capture_init(WD_analyse_test, 0, (u_char *)1);
+	WD_capture_init(WD_analyse_test, 50, (u_char *)1);
 	// 启动抓包
 	WD_capture_start();
 	//

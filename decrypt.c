@@ -89,7 +89,7 @@ decrypt_init()
 }
 
 void 
-merge_iv( u_char *bytes, int frame_len,	u_char key[40] )
+merge_iv( u_char *bytes, u_char key[40] )
 {
 	int i, j = 3;
 
@@ -380,6 +380,7 @@ decrypt_ccmp( u_char *bytes, int len, u_char TK1[16] )
 void *
 pre_encrypt( void *arg )
 {
+	int z;
 	int status;
 	u_char key[40];
 	AP_info *cur = NULL;
@@ -408,13 +409,12 @@ pre_encrypt( void *arg )
 			status = pthread_mutex_unlock( &AP_list->lock );
 
 			if( WEP_ENCRYPT  == cur->encrypt ) {
-
-				merge_iv( frame->bytes, frame->len, key );	
-				memmove( frame->bytes, &( frame->bytes[4] ), 
-														frame->len -4 );
-				frame->len -= 4;
-				wep_decrypt( frame->bytes, key,	
-								frame->len - 4,
+				z = ( frame->bytes[1] & 3 ) == 3 ? 30 : 24;
+				merge_iv( &frame->bytes[z], key );	
+				memmove( &frame->bytes[z], &( frame->bytes[z + 4] ), 
+													frame->len - z - 4 );
+				wep_decrypt( &frame->bytes[z], key,	
+								frame->len - z - 8,
 								IV_LEN + ( user->passwd_len ) / 2 );
 			} else if( WPA_ENCRYPT == cur->encrypt ) {
 				pthread_rwlock_rdlock( &wpa->wpa_lock );

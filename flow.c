@@ -32,9 +32,7 @@ analyse_flow( frame_t *frame , int encrypt )
 		flow = g_tcp_outflow;
 	}
 	
-	if( WEP_ENCRYPT == encrypt ) {
-		z += 4;		
-	} else if( WPA_ENCRYPT == encrypt ) {
+	if( WPA_ENCRYPT == encrypt ) {
 		z += 8;	
 	}
 	z += 8;
