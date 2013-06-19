@@ -45,6 +45,13 @@
 #define REQ_TYPE_BASIC_INFO			0x00
 #define REQ_TYPE_AP_LIST			0x01
 #define REQ_TYPE_FAKE_AP			0x02
+#define REQ_TYPE_FLOW_STATISTICS	0x03
+
+/* 流量统计过程中的宏定义 */
+#define FLOW_TYPE_TCP_IN			0x01
+#define FLOW_TYPE_TCP_OUT			0x02
+#define FLOW_TYPE_UDP_IN			0x03
+#define FLOW_TYPE_UDP_OUT			0x04
 
 
 struct packet {

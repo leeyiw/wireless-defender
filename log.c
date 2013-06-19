@@ -25,7 +25,11 @@ static int WD_log_fd = 0;
 void
 WD_log_init()
 {
+#ifdef WD_DEBUG
+	WD_log_fp = stdout;
+#else
 	WD_log_fp = fopen(WD_LOG_PATH, "a");
+#endif
 	if(WD_log_fp == NULL) {
 		err_exit1("[%s %d] open log file '%s' error", __FILE__, __LINE__,
 			WD_LOG_PATH);

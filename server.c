@@ -10,6 +10,7 @@
 #include "config.h"
 #include "wdcp.h"
 
+
 /**
  * 监听并处理客户端请求函数
  */
@@ -99,13 +100,14 @@ WD_server_main_loop(void *arg)
 		client_fd = accept(listen_fd,
 			(struct sockaddr *)&client_addr, &client_addr_len);
 		if(client_fd == -1) {
-			err_info("accept new connection error");
+			WD_log_warn("accept new connection error: %s", ERRSTR);
+			continue;
 		}
 		/* 创建新线程处理连接请求 */
 		ret = pthread_create(&tid, NULL, WD_server_handle_connection,
 			(void *)client_fd);
 		if(ret != 0) {
-			err_exit("create server thread error");
+			WD_log_warn("create server thread error");
 		}
 		// 父进程继续接收连接
 	}

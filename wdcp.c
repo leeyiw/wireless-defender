@@ -12,8 +12,7 @@
 #include "utils.h"
 #include "analyse.h"
 #include "log.h"
-
-extern AP_list_t *AP_list;
+#include "flow.h"
 
 static int WD_wdcp_check_login(const char *username, uint8_t username_len,
 	const char *password);
@@ -21,6 +20,7 @@ static int WD_wdcp_process_data_req(int fd, struct packet *p);
 static int WD_wdcp_req_basic_info(int fd, struct packet *p);
 static int WD_wdcp_req_ap_list(int fd, struct packet *p);
 static int WD_wdcp_req_fake_ap(int fd, struct packet *p);
+static int WD_wdcp_req_flow_statistics(int fd, struct packet *p);
 
 static ssize_t WD_wdcp_recv(int sockfd, void *buf, size_t len, int flags);
 static ssize_t WD_wdcp_send(int sockfd, void *buf, size_t len, int flags);
@@ -218,6 +218,9 @@ WD_wdcp_process_data_req(int fd, struct packet *p)
 	case REQ_TYPE_FAKE_AP:
 		WD_wdcp_req_fake_ap(fd, p);
 		break;
+	case REQ_TYPE_FLOW_STATISTICS:
+		WD_wdcp_req_flow_statistics(fd, p);
+		break;
 	default:
 		break;
 	}
@@ -267,12 +270,71 @@ WD_wdcp_req_fake_ap(int fd, struct packet *p)
 	WD_wdcp_rst_pkt(p);
 
 	// 写入数据响应头部
-	WD_wdcp_packet_write_u8(p, DATA_REQ_PKT);
+	WD_wdcp_packet_write_u8(p, DATA_RSP_PKT);
 	WD_wdcp_packet_write_u8(p, REQ_TYPE_FAKE_AP);
 
 	// 写入AP列表
 	WD_wdcp_packet_write_ap_list(p, AP_list);
 	
+	// 发送数据包
+	WD_wdcp_send_pkt(fd, p);
+
+	return WDCP_PROCESS_SUCCESS;
+}
+
+static int
+WD_wdcp_req_flow_statistics(int fd, struct packet *p)
+{
+	int ret;
+
+	WD_wdcp_rst_pkt(p);
+
+	// 写入数据响应头部
+	WD_wdcp_packet_write_u8(p, DATA_RSP_PKT);
+	WD_wdcp_packet_write_u8(p, REQ_TYPE_FAKE_AP);
+
+	// 写入流入流量信息
+	// 先加锁
+	ret = pthread_rwlock_rdlock(&g_tcp_inflow->flow_lock);
+	if(ret != 0) {
+		WD_log_error("lock tcp inflow struct error: %s", strerror(ret));
+	}
+	WD_wdcp_packet_write_u8(p, FLOW_TYPE_TCP_IN);
+	WD_wdcp_packet_write_n(p, &g_tcp_inflow->http, sizeof(g_tcp_inflow->http));
+	WD_wdcp_packet_write_n(p, &g_tcp_inflow->ssh, sizeof(g_tcp_inflow->ssh));
+	WD_wdcp_packet_write_n(p, &g_tcp_inflow->smtp, sizeof(g_tcp_inflow->smtp));
+	WD_wdcp_packet_write_n(p, &g_tcp_inflow->telnet,
+		sizeof(g_tcp_inflow->telnet));
+	WD_wdcp_packet_write_n(p, &g_tcp_inflow->ftp, sizeof(g_tcp_inflow->ftp));
+	WD_wdcp_packet_write_n(p, &g_tcp_inflow->dns, sizeof(g_tcp_inflow->dns));
+	// 解锁
+	ret = pthread_rwlock_unlock(&g_tcp_inflow->flow_lock);
+	if(ret != 0) {
+		WD_log_error("unlock tcp inflow struct error: %s", strerror(ret));
+	}
+
+	// 写入流出流量信息
+	// 先加锁
+	ret = pthread_rwlock_rdlock(&g_tcp_outflow->flow_lock);
+	if(ret != 0) {
+		WD_log_error("lock tcp outflow struct error: %s", strerror(ret));
+	}
+	WD_wdcp_packet_write_u8(p, FLOW_TYPE_TCP_IN);
+	WD_wdcp_packet_write_n(p, &g_tcp_outflow->http,
+		sizeof(g_tcp_outflow->http));
+	WD_wdcp_packet_write_n(p, &g_tcp_outflow->ssh, sizeof(g_tcp_outflow->ssh));
+	WD_wdcp_packet_write_n(p, &g_tcp_outflow->smtp,
+		sizeof(g_tcp_outflow->smtp));
+	WD_wdcp_packet_write_n(p, &g_tcp_outflow->telnet,
+		sizeof(g_tcp_outflow->telnet));
+	WD_wdcp_packet_write_n(p, &g_tcp_outflow->ftp, sizeof(g_tcp_outflow->ftp));
+	WD_wdcp_packet_write_n(p, &g_tcp_outflow->dns, sizeof(g_tcp_outflow->dns));
+	// 解锁
+	ret = pthread_rwlock_unlock(&g_tcp_outflow->flow_lock);
+	if(ret != 0) {
+		WD_log_error("unlock tcp outflow struct error: %s", strerror(ret));
+	}
+
 	// 发送数据包
 	WD_wdcp_send_pkt(fd, p);
 

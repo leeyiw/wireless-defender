@@ -1,6 +1,9 @@
 #ifndef _LOG_H_
 #define _LOG_H_
 
+#include <string.h>
+#include <errno.h>
+
 /* 日志级别 */
 #define LOG_FATAL	(4)
 #define LOG_ERROR	(3)
@@ -9,6 +12,8 @@
 #define LOG_DEBUG	(0)
 
 #define WD_LOG_PATH "wireless-defender.log"
+
+#define ERRSTR		(strerror(errno))
 
 /**
  * 初始化日志模块
