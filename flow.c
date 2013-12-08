@@ -43,30 +43,24 @@ analyse_flow( frame_t *frame , int encrypt )
 		port = frame->bytes[z + 20] * 256 + frame->bytes[z + 21];
 		pthread_rwlock_wrlock( &flow->flow_lock );
 		switch( port ) {
-			case SMTP:
-					flow->smtp += ( double )( bytes + 20 ) / KB;
-					printf( "%lf\n", flow->smtp );
-					break;
-			case TELNET:
-					flow->telnet += ( double )( bytes + 20 ) / KB;
-					printf( "%lf\n", flow->telnet );
-					break;
-			case SSH:
-					flow->ssh += ( double )( bytes + 20 ) / KB;
-					printf( "%lf\n", flow->ssh );
-					break;
-			case HTTP:
-					flow->http += ( double )( bytes + 20 ) / KB;
-					printf( "%lf\n", flow->http );
-					break;
-			case FTP:
-					flow->ftp += ( double )( bytes + 20 ) / KB;
-					printf( "%lf\n", flow->ftp );
-					break;
-			case DNS:
-					flow->dns += ( double )( bytes + 20 ) / KB;
-					printf( "%lf\n", flow->dns );
-					break;
+		case SMTP:
+			flow->smtp += ( double )( bytes + 20 ) / KB;
+			break;
+		case TELNET:
+			flow->telnet += ( double )( bytes + 20 ) / KB;
+			break;
+		case SSH:
+			flow->ssh += ( double )( bytes + 20 ) / KB;
+			break;
+		case HTTP:
+			flow->http += ( double )( bytes + 20 ) / KB;
+			break;
+		case FTP:
+			flow->ftp += ( double )( bytes + 20 ) / KB;
+			break;
+		case DNS:
+			flow->dns += ( double )( bytes + 20 ) / KB;
+			break;
 		} 
 		pthread_rwlock_unlock( &flow->flow_lock );
 	}

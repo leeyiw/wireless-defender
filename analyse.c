@@ -352,44 +352,44 @@ deal_data( frame_t **frame )
 	u_char *bytes_bak = ( *frame )->bytes;
 	int ret_eapol, ret_exist;
 
-	switch( bytes_bak[1] & 3 ) {
-		case 0: 								/* IBSS */	
-				memcpy( da, &bytes_bak[4], 6 );
-				memcpy( sa, &bytes_bak[10], 6 );
-				memcpy( bssid, &bytes_bak[16], 6 );
-				break;	
-		case 1: 								/* TODS */	
-				memcpy( bssid, &bytes_bak[4], 6 );
-				memcpy( sa, &bytes_bak[10], 6 );
-				memcpy( da, &bytes_bak[16], 6 );
-				break;						
-		case 2: 								/* FROMDS */
-				memcpy( da, &bytes_bak[4], 6 );
-				memcpy( bssid, &bytes_bak[10], 6 );
-				memcpy( sa, &bytes_bak[16], 6 );
-				break;
-		case 3: 								/* WDS */
-				memcpy( bssid, &bytes_bak[10], 6 );
-				memcpy( da, &bytes_bak[16], 6 );
-				memcpy( sa, &bytes_bak[22], 6 );
-				break;	
+	switch ( bytes_bak[1] & 3 ) {
+		case 0: 					/* IBSS */	
+			memcpy( da, &bytes_bak[4], 6 );
+			memcpy( sa, &bytes_bak[10], 6 );
+			memcpy( bssid, &bytes_bak[16], 6 );
+			break;	
+		case 1: 					/* TODS */	
+			memcpy( bssid, &bytes_bak[4], 6 );
+			memcpy( sa, &bytes_bak[10], 6 );
+			memcpy( da, &bytes_bak[16], 6 );
+			break;						
+		case 2: 					/* FROMDS */
+			memcpy( da, &bytes_bak[4], 6 );
+			memcpy( bssid, &bytes_bak[10], 6 );
+			memcpy( sa, &bytes_bak[16], 6 );
+			break;
+		case 3: 					/* WDS */
+			memcpy( bssid, &bytes_bak[10], 6 );
+			memcpy( da, &bytes_bak[16], 6 );
+			memcpy( sa, &bytes_bak[22], 6 );
+			break;	
 	}
 	
-	switch( bytes_bak[1] & 3 ) {
-		case 1: 								/* TODS */	
-				memcpy( stmac, &bytes_bak[10], 6 );
-				break;						
-		case 2: 								/* FROMDS */
-				memcpy( stmac, &bytes_bak[4], 6 ); 
-				break;
-		case 3: 								/* WDS */
-				memcpy( stmac, &bytes_bak[10], 6 );
-				break;	
+	switch ( bytes_bak[1] & 3 ) {
+		case 1: 					/* TODS */	
+			memcpy( stmac, &bytes_bak[10], 6 );
+			break;						
+		case 2: 					/* FROMDS */
+			memcpy( stmac, &bytes_bak[4], 6 ); 
+			break;
+		case 3: 					/* WDS */
+			memcpy( stmac, &bytes_bak[10], 6 );
+			break;	
 	}
 
-	if( memcmp( stmac, user_stmac, 6 ) ) {
-		return 0;
-	}
+//	if( memcmp( stmac, user_stmac, 6 ) ) {
+//		return 0;
+//	}
 
 	pthread_rwlock_wrlock( &wpa->wpa_lock );
 
@@ -455,7 +455,7 @@ deal_beacon_mac( const u_char *bytes, int *frame_len )
 			AP_list->tail = AP_list->tail->next;
 		}
 
-		deal_timestamp( &bytes[14],frame_len ); 
+		deal_timestamp( &bytes[14], frame_len ); 
 	}
 	return 0;
 }

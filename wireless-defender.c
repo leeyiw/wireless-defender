@@ -55,7 +55,7 @@ show_ap_list()
 	AP_info *cur = AP_list->head;
 
 	while( cur != NULL ) {
-		printf( "%s\n", cur->ssid );	
+		printf( "%s  %d\n", cur->ssid, cur->encrypt );	
 		cur = cur->next;
 	}
 }
@@ -84,11 +84,11 @@ main(int argc, char *argv[])
 	WD_server_start();
 
 	// 初始化抓包模块
-	WD_capture_init(WD_analyse_test, 50, (u_char *)1);
+	WD_capture_init(WD_analyse_test, 0, (u_char *)1);
 	// 启动抓包
 	WD_capture_start();
 	//
-	//show_ap_list();	
+	show_ap_list();	
 
 	// 等待服务器模块结束
 	WD_server_wait();

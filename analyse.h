@@ -15,14 +15,14 @@
  * frame_info->type
  */
 #define MANAGE_TYPE				0 
-#define CONTROL_TYPE			4
+#define CONTROL_TYPE				4
 #define DATA_TYPE				8
 
 #define DATA					0
 #define BEACON					8
 
-#define TODS 	1
-#define FROMDS 	2
+#define TODS 			1
+#define FROMDS 			2
 
 #define NO_ENCRYPT		0
 #define WEP_ENCRYPT		1 
@@ -30,15 +30,15 @@
 
 #define SNAP_DSAP 				0xaa
 #define SNAP_SSAP				0xaa
-#define SNAP_CONTROL			0x03
-#define ETHERNET_TYPE_ONE		0x88
-#define ETHERNET_TYPE_SECOND	0x8e
+#define SNAP_CONTROL				0x03
+#define ETHERNET_TYPE_ONE			0x88
+#define ETHERNET_TYPE_SECOND			0x8e
 
-#define WPA_FLAG		0x20
+#define WPA_FLAG			0x20
 
-#define	TYPE_KEY				0x03 
+#define	TYPE_KEY			0x03 
 #define	EAPOL_WPA_KEY			0xfe
-#define	RSN						0x02 
+#define	RSN				0x02 
 
 #define	PAIRWISE				0x08
 #define INSTALL					0x40	
